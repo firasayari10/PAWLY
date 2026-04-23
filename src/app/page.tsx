@@ -1,8 +1,9 @@
-"use client"
+"use client";
+
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
+// ─── NavBar ─────────────────────────────────────────────────────────────────
 
 function NavBar() {
   const { isSignedIn } = useUser();
@@ -15,17 +16,18 @@ function NavBar() {
       </Link>
 
       <ul className="hidden items-center gap-8 text-sm font-medium text-zinc-500 dark:text-zinc-400 lg:flex">
-        <li><Link href="#how" className="transition hover:text-teal-600 dark:hover:text-teal-400">Comment ça marche</Link></li>
+        <li><Link href="#how"      className="transition hover:text-teal-600 dark:hover:text-teal-400">Comment ça marche</Link></li>
         <li><Link href="#features" className="transition hover:text-teal-600 dark:hover:text-teal-400">Fonctionnalités</Link></li>
-        <li><Link href="#users" className="transition hover:text-teal-600 dark:hover:text-teal-400">Utilisateurs</Link></li>
-        <li><Link href="#reviews" className="transition hover:text-teal-600 dark:hover:text-teal-400">Avis</Link></li>
+        <li><Link href="#users"    className="transition hover:text-teal-600 dark:hover:text-teal-400">Utilisateurs</Link></li>
+        <li><Link href="#reviews"  className="transition hover:text-teal-600 dark:hover:text-teal-400">Avis</Link></li>
       </ul>
 
       {isSignedIn ? (
         <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: "h-8 w-8" } }} />
       ) : (
+        // ✅ FIX: was "/signup" → corrected to match actual route structure
         <Link
-          href="/signup"
+          href="/authentification/login"
           className="rounded-full bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600"
         >
           Commencer gratuitement
@@ -35,7 +37,7 @@ function NavBar() {
   );
 }
 
-// ─── Clerk-style profile card ───────────────────────────────────────────────────
+// ─── Profile Card ────────────────────────────────────────────────────────────
 
 function ClerkProfileCard() {
   return (
@@ -62,11 +64,9 @@ function ClerkProfileCard() {
             J
           </div>
         </div>
-
         <div className="p-5">
           <p className="font-serif text-xl font-bold text-zinc-800 dark:text-zinc-100">Julie M.</p>
           <p className="mb-4 text-xs font-medium text-teal-600 dark:text-teal-400">Pet Sitter Professionnelle · Paris 11e</p>
-
           <div className="mb-4 grid grid-cols-3 gap-2">
             {[{ value: "247", label: "Gardes" }, { value: "4.9", label: "Note" }, { value: "98%", label: "Réponse" }].map((s) => (
               <div key={s.label} className="rounded-xl bg-zinc-50 p-2.5 text-center dark:bg-zinc-800">
@@ -75,19 +75,16 @@ function ClerkProfileCard() {
               </div>
             ))}
           </div>
-
           <div className="mb-4 flex flex-wrap gap-1.5">
             {["🐶 Chiens", "🐱 Chats", "🐰 Lapins"].map((tag) => (
               <span key={tag} className="rounded-full bg-orange-50 px-3 py-1 text-[11px] font-medium text-orange-500 dark:bg-orange-900/20 dark:text-orange-400">{tag}</span>
             ))}
           </div>
-
           <div className="mb-4 flex items-center gap-2 text-sm">
             <span className="tracking-tight text-amber-400">★★★★★</span>
             <span className="font-bold text-zinc-800 dark:text-zinc-100">4.99</span>
             <span className="text-zinc-400">(183 avis)</span>
           </div>
-
           <button className="w-full rounded-xl bg-teal-600 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
             Voir le profil complet
           </button>
@@ -105,7 +102,7 @@ function ClerkProfileCard() {
   );
 }
 
-// ─── Hero CTA buttons ───────────────────────────────────────────────────────────
+// ─── Hero CTAs ───────────────────────────────────────────────────────────────
 
 function HeroCTAs() {
   const { isSignedIn } = useUser();
@@ -113,17 +110,24 @@ function HeroCTAs() {
   return (
     <div className="mt-10 flex flex-wrap gap-4">
       {isSignedIn ? (
-        <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: "h-10 w-10" } }} />
+        <Link
+          href="/main/landing"
+          className="rounded-full bg-teal-600 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-teal-200 transition hover:-translate-y-0.5 hover:bg-teal-700"
+        >
+          Mon espace →
+        </Link>
       ) : (
         <>
+          {/* ✅ FIX: was "/signup" → now points to actual signup route */}
           <Link
-            href="/signup"
+            href="/authentification/signup/register"
             className="rounded-full bg-teal-600 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-teal-200 transition hover:-translate-y-0.5 hover:bg-teal-700 hover:shadow-teal-300 dark:shadow-teal-900"
           >
             Trouver un gardien
           </Link>
+          {/* ✅ FIX: was "/signup?role=sitter" → now points to actual signup route */}
           <Link
-            href="/signup?role=sitter"
+            href="/authentification/signup/register?role=sitter"
             className="rounded-full border border-zinc-300 px-8 py-4 text-sm font-semibold text-zinc-700 transition hover:border-teal-500 hover:text-teal-600 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-teal-500 dark:hover:text-teal-400"
           >
             Devenir prestataire
@@ -134,7 +138,7 @@ function HeroCTAs() {
   );
 }
 
-// ─── Page ───────────────────────────────────────────────────────────────────────
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   return (
@@ -158,12 +162,12 @@ export default function Home() {
             Plateforme de garde d&apos;animaux
           </span>
           <h1 className="font-serif text-5xl font-black leading-tight tracking-tight lg:text-6xl xl:text-7xl">
-            La garde de votre animal, <em className="font-light not-italic text-teal-600 dark:text-teal-400">réinventée</em>
+            La garde de votre animal,{" "}
+            <em className="font-light not-italic text-teal-600 dark:text-teal-400">réinventée</em>
           </h1>
           <p className="mt-6 max-w-md text-base leading-relaxed text-zinc-500 dark:text-zinc-400">
             Trouvez des prestataires de garde vérifiés près de chez vous. Réservez en quelques clics, suivez la prestation en temps réel et gardez l&apos;esprit tranquille.
           </p>
-
           <HeroCTAs />
         </div>
 
@@ -171,8 +175,6 @@ export default function Home() {
           <ClerkProfileCard />
         </div>
       </section>
-
-      {/* Keep all your sections like StatsBand, HowItWorks, Features, Users, Reviews, CTA, Footer */}
     </div>
   );
 }
