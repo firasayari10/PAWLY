@@ -1,29 +1,30 @@
 "use client";
 
-import Link from "next/link";
-import { SignOutButton, SignUp, useAuth } from "@clerk/nextjs";
+import { SignUp, useAuth } from "@clerk/nextjs";
+import { AuthShell, AlreadySignedIn, useClerkAppearance } from "@/components/auth-shell";
 
 export default function SignupCatchAllPage() {
   const { isLoaded, isSignedIn } = useAuth();
+  const appearance = useClerkAppearance();
 
-  if (isLoaded && isSignedIn) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center">
-        <div className="text-lg font-semibold">You are already signed in.</div>
-        <div className="flex flex-col gap-2">
-          <Link className="underline" href="/landing">
-            Go to landing
-          </Link>
-          <SignOutButton redirectUrl="/signup">Log out</SignOutButton>
-        </div>
-      </div>
-    );
-  }
+  if (!isLoaded) return null;
+  if (isSignedIn) return <AlreadySignedIn signOutRedirect="/signup" />;
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <SignUp routing="hash" afterSignInUrl="/landing" afterSignUpUrl="/landing" />
-    </div>
+    <AuthShell
+      eyebrow="Inscription"
+      title="Rejoignez la famille Pawly"
+      subtitle="Créez votre compte en quelques secondes et trouvez le gardien idéal."
+      switchPrompt="Vous avez déjà un compte ?"
+      switchHref="/login"
+      switchLabel="Se connecter"
+    >
+      <SignUp
+        routing="hash"
+        appearance={appearance}
+        fallbackRedirectUrl="/landing"
+        signInFallbackRedirectUrl="/landing"
+      />
+    </AuthShell>
   );
 }
-
