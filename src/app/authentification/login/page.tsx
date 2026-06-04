@@ -70,10 +70,9 @@ export default function LoginCatchAllPage() {
                 <h1 className="text-3xl font-black text-teal-600">PAWLY 🐾</h1>
             </div>
 
+            {/* ✅ 只需要删除 afterSignInUrl 和 afterSignUpUrl 这两行 */}
             <SignIn
                 routing="hash"
-                afterSignInUrl="/main/dashboard"
-                afterSignUpUrl="/main/dashboard"
                 appearance={{
                     elements: {
                         formButtonPrimary: "bg-teal-600 hover:bg-teal-700 text-sm normal-case rounded-xl",
