@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { SignOutButton } from "@clerk/nextjs";
 import type { Appearance } from "@clerk/types";
+import { Camera, Check, Lock, type LucideIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BrandPaw } from "@/components/icons";
 
 // ── Clerk appearance, brand-themed & dark-mode aware ────────────────────────────
 // Clerk renders its own card; we strip its chrome so it sits cleanly inside the
@@ -54,10 +56,10 @@ export function useClerkAppearance(): Appearance {
   };
 }
 
-const BRAND_POINTS = [
-  { icon: "✓", text: "Prestataires vérifiés manuellement" },
-  { icon: "📸", text: "E-journal quotidien avec photos" },
-  { icon: "🔒", text: "Paiement sécurisé sous séquestre" },
+const BRAND_POINTS: { icon: LucideIcon; text: string }[] = [
+  { icon: Check, text: "Prestataires vérifiés manuellement" },
+  { icon: Camera, text: "E-journal quotidien avec photos" },
+  { icon: Lock, text: "Paiement sécurisé sous séquestre" },
 ];
 
 // ── Split-screen auth layout ────────────────────────────────────────────────────
@@ -89,7 +91,7 @@ export function AuthShell({
         </div>
 
         <Link href="/" className="relative z-10 inline-flex items-center gap-2 font-serif text-2xl font-black tracking-tight">
-          <span>🐾</span><span>PAWLY</span>
+          <BrandPaw className="h-6 w-6" /><span>PAWLY</span>
         </Link>
 
         {/* On large screens, a rich value-prop block. Hidden on mobile to keep the form above the fold. */}
@@ -100,8 +102,8 @@ export function AuthShell({
           <ul className="mt-8 space-y-4">
             {BRAND_POINTS.map((p) => (
               <li key={p.text} className="flex items-center gap-3 text-sm text-teal-50">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm backdrop-blur-sm">
-                  {p.icon}
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm">
+                  <p.icon className="h-4 w-4" aria-hidden />
                 </span>
                 {p.text}
               </li>
@@ -158,7 +160,7 @@ export function AlreadySignedIn({ signOutRedirect }: { signOutRedirect: string }
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-amber-50 px-6 text-center font-sans dark:bg-zinc-950">
       <Link href="/" className="inline-flex items-center gap-2 font-serif text-3xl font-black tracking-tight text-teal-700 dark:text-teal-400">
-        <span>🐾</span><span>PAWLY</span>
+        <BrandPaw className="h-7 w-7" /><span>PAWLY</span>
       </Link>
       <div>
         <p className="font-serif text-xl font-bold text-zinc-800 dark:text-zinc-100">Vous êtes déjà connecté</p>

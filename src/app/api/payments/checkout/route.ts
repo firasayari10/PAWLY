@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getStripe } from "@/lib/stripe";
 import { eurosToStripeAmount, payabilityError } from "@/lib/bookings";
+import { resolveAccount } from "@/lib/account";
 
 // POST /api/payments/checkout — create a Stripe Checkout Session for an accepted
 // booking. The amount is ALWAYS recomputed server-side from the stored tarif_total;
@@ -23,14 +24,10 @@ export async function POST(request: Request) {
 
   const supabase = createServerSupabase();
 
-  // Resolve the caller and ensure they own this booking.
-  const { data: me } = await supabase
-    .from("utilisateur")
-    .select("id_user, email")
-    .eq("clerk_id", userId)
-    .maybeSingle();
-
-  if (!me) return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
+  // Resolve the caller (block suspended) and ensure they own this booking.
+  const account = await resolveAccount(supabase, userId);
+  if (!account.ok) return NextResponse.json({ error: account.error }, { status: account.status });
+  const me = account.user;
 
   const { data: offre, error: offreError } = await supabase
     .from("offre_garde")

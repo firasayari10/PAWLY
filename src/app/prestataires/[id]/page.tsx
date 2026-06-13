@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { RedirectToSignIn, useAuth } from "@clerk/nextjs";
+import { CalendarDays, Check, CircleCheck, MapPin, PawPrint, TriangleAlert, Wallet, type LucideIcon } from "lucide-react";
 import { AuthNavbar } from "@/components/auth-navbar";
+import { AnimalIcon } from "@/components/icons";
 import { StarsReadonly } from "@/components/review-form";
+import { ReportButton } from "@/components/report-button";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -46,17 +49,13 @@ interface Avis {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const ANIMAL_OPTIONS = [
-  { value: "chien",   label: "🐕 Chien" },
-  { value: "chat",    label: "🐱 Chat" },
-  { value: "lapin",   label: "🐰 Lapin" },
-  { value: "oiseau",  label: "🐦 Oiseau" },
-  { value: "rongeur", label: "🐹 Rongeur" },
-  { value: "reptile", label: "🦎 Reptile" },
+  { value: "chien",   label: "Chien" },
+  { value: "chat",    label: "Chat" },
+  { value: "lapin",   label: "Lapin" },
+  { value: "oiseau",  label: "Oiseau" },
+  { value: "rongeur", label: "Rongeur" },
+  { value: "reptile", label: "Reptile" },
 ];
-
-const ANIMAL_EMOJI: Record<string, string> = {
-  chien: "🐕", chat: "🐱", lapin: "🐰", oiseau: "🐦", rongeur: "🐹", reptile: "🦎",
-};
 
 // ── Stars ─────────────────────────────────────────────────────────────────────
 
@@ -246,7 +245,12 @@ function OfferForm({ prestataire }: { prestataire: Prestataire }) {
             ? "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-400"
             : "border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400"
         }`}>
-          {feedback.ok ? "✓ " : "⚠ "}{feedback.msg}
+          {feedback.ok ? (
+            <Check className="mr-1 inline-block h-4 w-4 align-text-bottom" aria-hidden />
+          ) : (
+            <TriangleAlert className="mr-1 inline-block h-4 w-4 align-text-bottom" aria-hidden />
+          )}
+          {feedback.msg}
         </div>
       )}
 
@@ -323,7 +327,7 @@ export default function PrestatairePage() {
         {/* Not found */}
         {notFound && (
           <div className="flex flex-col items-center gap-4 py-20 text-center">
-            <span className="text-6xl">🐾</span>
+            <PawPrint className="h-14 w-14 text-zinc-300 dark:text-zinc-600" aria-hidden />
             <p className="font-serif text-2xl font-black text-zinc-700 dark:text-zinc-300">Prestataire introuvable</p>
             <Link href="/search" className="rounded-xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white hover:bg-teal-700">
               Retour à la recherche
@@ -354,8 +358,8 @@ export default function PrestatairePage() {
                       <h1 className="font-serif text-2xl font-black text-zinc-800 dark:text-zinc-100">
                         {p.prenom} {p.nom}
                       </h1>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        📍 {p.ville} {p.code_postal}
+                      <p className="flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden /> {p.ville} {p.code_postal}
                       </p>
                       {p.profil && (
                         <div className="mt-2 flex items-center gap-2">
@@ -377,6 +381,9 @@ export default function PrestatairePage() {
                       </div>
                     )}
                   </div>
+                  <div className="mt-3 text-right">
+                    <ReportButton type="profil" cibleId={p.id_user} label="Signaler ce profil" />
+                  </div>
                 </div>
               </div>
 
@@ -393,14 +400,14 @@ export default function PrestatairePage() {
                 <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-700/60 dark:bg-zinc-800">
                   <h2 className="mb-4 font-serif text-lg font-bold text-zinc-800 dark:text-zinc-100">Services</h2>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {[
-                      { icon: "📅", label: "Expérience", value: `${p.profil.annees_experience} an${p.profil.annees_experience !== 1 ? "s" : ""}` },
-                      { icon: "📍", label: "Rayon d'action", value: `${p.profil.rayon_km} km` },
-                      { icon: "💰", label: "Tarif journalier", value: `${p.profil.tarif_jour} €/jour` },
-                      { icon: "✅", label: "Disponibilité", value: p.profil.disponible ? "Disponible" : "Non disponible" },
-                    ].map(({ icon, label, value }) => (
+                    {([
+                      { Icon: CalendarDays, label: "Expérience", value: `${p.profil.annees_experience} an${p.profil.annees_experience !== 1 ? "s" : ""}` },
+                      { Icon: MapPin,       label: "Rayon d'action", value: `${p.profil.rayon_km} km` },
+                      { Icon: Wallet,       label: "Tarif journalier", value: `${p.profil.tarif_jour} €/jour` },
+                      { Icon: CircleCheck,  label: "Disponibilité", value: p.profil.disponible ? "Disponible" : "Non disponible" },
+                    ] as { Icon: LucideIcon; label: string; value: string }[]).map(({ Icon, label, value }) => (
                       <div key={label} className="flex items-center gap-3 rounded-xl bg-zinc-50 p-3 dark:bg-zinc-700/50">
-                        <span className="text-xl">{icon}</span>
+                        <Icon className="h-5 w-5 shrink-0 text-teal-600 dark:text-teal-400" aria-hidden />
                         <div>
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">{label}</p>
                           <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{value}</p>
@@ -417,7 +424,7 @@ export default function PrestatairePage() {
                       <div className="flex flex-wrap gap-2">
                         {p.profil.types_animaux.map((a) => (
                           <span key={a} className="flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-sm font-medium text-orange-600 dark:border-orange-800/40 dark:bg-orange-900/20 dark:text-orange-400">
-                            {ANIMAL_EMOJI[a] ?? "🐾"} {a.charAt(0).toUpperCase() + a.slice(1)}
+                            <AnimalIcon type={a} className="h-4 w-4" /> {a.charAt(0).toUpperCase() + a.slice(1)}
                           </span>
                         ))}
                       </div>
@@ -462,9 +469,12 @@ export default function PrestatairePage() {
                           <StarsReadonly note={a.note} />
                         </div>
                         {a.commentaire && <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">&ldquo;{a.commentaire}&rdquo;</p>}
-                        <p className="mt-1 text-[11px] text-zinc-400">
-                          {new Date(a.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
-                        </p>
+                        <div className="mt-1 flex items-center justify-between">
+                          <p className="text-[11px] text-zinc-400">
+                            {new Date(a.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                          </p>
+                          <ReportButton type="avis" cibleId={a.id} label="Signaler" />
+                        </div>
                       </div>
                     ))}
                   </div>

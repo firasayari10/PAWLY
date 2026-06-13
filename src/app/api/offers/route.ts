@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { computeNbJours, computeTarifTotal, validateBookingInput } from "@/lib/bookings";
+import { resolveAccount } from "@/lib/account";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
@@ -25,33 +26,32 @@ export async function POST(request: Request) {
 
   const { prestataire_id, type_animal, nom_animal, nb_animaux, date_debut, date_fin, message } = body;
 
-  const validationError = validateBookingInput({ prestataire_id, type_animal, nom_animal, date_debut, date_fin });
+  const validationError = validateBookingInput({ prestataire_id, type_animal, nom_animal, nb_animaux, date_debut, date_fin });
   if (validationError) {
     return NextResponse.json({ error: validationError }, { status: 400 });
   }
 
   const supabase = createServerSupabase();
 
-  // Resolve proprietaire_id from clerk_id
-  const { data: owner, error: ownerError } = await supabase
-    .from("utilisateur")
-    .select("id_user")
-    .eq("clerk_id", userId)
-    .maybeSingle();
+  // Resolve proprietaire_id from clerk_id (and block suspended accounts).
+  const account = await resolveAccount(supabase, userId);
+  if (!account.ok) return NextResponse.json({ error: account.error }, { status: account.status });
+  const owner = account.user;
 
-  if (ownerError || !owner) {
-    return NextResponse.json({ error: "Profil introuvable. Complétez d'abord votre profil." }, { status: 404 });
-  }
-
-  // Compute tarif_total from prestataire's tarif_jour
+  // Compute tarif_total from prestataire's tarif_jour. The target must be a real
+  // prestataire profile — otherwise the price would silently be null.
   const { data: profil } = await supabase
     .from("prestataire_profil")
     .select("tarif_jour")
     .eq("utilisateur_id", prestataire_id)
     .maybeSingle();
 
+  if (!profil) {
+    return NextResponse.json({ error: "Prestataire introuvable." }, { status: 404 });
+  }
+
   const nb_jours = computeNbJours(date_debut!, date_fin!);
-  const tarif_total = profil ? computeTarifTotal(Number(profil.tarif_jour), nb_jours) : null;
+  const tarif_total = computeTarifTotal(Number(profil.tarif_jour), nb_jours);
 
   const { data: offer, error: insertError } = await supabase
     .from("offre_garde")

@@ -133,4 +133,16 @@ describe("validateBookingInput", () => {
   it("rejects invalid dates", () => {
     expect(validateBookingInput({ ...base, date_debut: "nope" })).toMatch(/invalides/);
   });
+
+  it("accepts a valid nb_animaux and defaults when omitted", () => {
+    expect(validateBookingInput({ ...base, nb_animaux: 3 })).toBeNull();
+    expect(validateBookingInput({ ...base, nb_animaux: undefined })).toBeNull();
+  });
+
+  it("rejects non-positive, fractional or oversized nb_animaux", () => {
+    expect(validateBookingInput({ ...base, nb_animaux: 0 })).toMatch(/animaux/);
+    expect(validateBookingInput({ ...base, nb_animaux: -2 })).toMatch(/animaux/);
+    expect(validateBookingInput({ ...base, nb_animaux: 2.5 })).toMatch(/animaux/);
+    expect(validateBookingInput({ ...base, nb_animaux: 9999 })).toMatch(/animaux/);
+  });
 });

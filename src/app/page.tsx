@@ -3,7 +3,29 @@
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  AtSign,
+  Camera,
+  Cat,
+  Check,
+  ClipboardList,
+  Dog,
+  Globe,
+  House,
+  IdCard,
+  Lock,
+  MapPin,
+  PawPrint,
+  Search,
+  Shield,
+  Star,
+  Stethoscope,
+  Sun,
+  TreePine,
+  type LucideIcon,
+} from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AnimalIcon, BrandPaw } from "@/components/icons";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // UTILITIES
@@ -59,10 +81,10 @@ const STATS = [
   { value: 150,   suffix: "+", label: "Villes en France" },
 ];
 
-const STEPS = [
-  { num: "01", emoji: "🔍", title: "Cherchez près de chez vous", desc: "Entrez votre ville et vos dates. Notre algorithme vous propose les prestataires les mieux notés dans un rayon de 10 km." },
-  { num: "02", emoji: "📋", title: "Consultez les profils vérifiés", desc: "Lisez les avis, vérifiez les certifications, envoyez un message. Chaque prestataire est approuvé manuellement par notre équipe." },
-  { num: "03", emoji: "🛡️", title: "Réservez l'esprit tranquille", desc: "Paiement sécurisé sous séquestre, e-journal quotidien avec photos, suivi en temps réel. Votre animal est entre de bonnes mains." },
+const STEPS: { num: string; Icon: LucideIcon; title: string; desc: string }[] = [
+  { num: "01", Icon: Search,        title: "Cherchez près de chez vous", desc: "Entrez votre ville et vos dates. Notre algorithme vous propose les prestataires les mieux notés dans un rayon de 10 km." },
+  { num: "02", Icon: ClipboardList, title: "Consultez les profils vérifiés", desc: "Lisez les avis, vérifiez les certifications, envoyez un message. Chaque prestataire est approuvé manuellement par notre équipe." },
+  { num: "03", Icon: Shield,        title: "Réservez l'esprit tranquille", desc: "Paiement sécurisé sous séquestre, e-journal quotidien avec photos, suivi en temps réel. Votre animal est entre de bonnes mains." },
 ];
 
 const FEATURES = [
@@ -90,11 +112,11 @@ const FEATURES = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Sophie M.", city: "Paris 15e", pet: "🐕 Golden Retriever", avatar: "S", color: "from-sky-300 to-teal-400", rating: 5, text: "J'ai trouvé la gardienne parfaite en moins de 10 minutes. Les photos quotidiennes du e-journal m'ont permis de partir en vacances totalement sereine. Je recommande Pawly à tous les amoureux des animaux !" },
-  { name: "Thomas L.", city: "Lyon 3e",  pet: "🐾 Prestataire certifié", avatar: "T", color: "from-violet-300 to-purple-400", rating: 5, text: "En tant que prestataire, Pawly m'a permis de développer mon activité et de rencontrer des familles formidables. Le système de paiement sécurisé est vraiment rassurant." },
-  { name: "Amélie R.", city: "Bordeaux", pet: "🐱 Abyssin",            avatar: "A", color: "from-orange-300 to-rose-400",  rating: 5, text: "Mon chat Mochi a été choyé pendant mes deux semaines de vacances. La gardienne lui a même appris des petits tours ! Le e-journal avec les photos m'a rendu heureuse chaque jour." },
-  { name: "Marc D.",   city: "Nantes",   pet: "🐕 Berger Australien",  avatar: "M", color: "from-emerald-300 to-teal-400", rating: 5, text: "Application très intuitive, réservation en 3 minutes chrono. Le suivi en temps réel et les messages rassurants du gardien ont fait toute la différence. Mon chien était aux anges !" },
-  { name: "Chloé B.",  city: "Marseille",pet: "🐰 Lapin nain",         avatar: "C", color: "from-pink-300 to-rose-400",    rating: 5, text: "Le e-journal avec les photos quotidiennes était absolument rassurant. Mon lapin était en de bonnes mains et je le voyais s'amuser chaque jour. Merci Pawly, vous avez changé ma façon de voyager !" },
+  { name: "Sophie M.", city: "Paris 15e", pet: "Golden Retriever", avatar: "S", color: "from-sky-300 to-teal-400", rating: 5, text: "J'ai trouvé la gardienne parfaite en moins de 10 minutes. Les photos quotidiennes du e-journal m'ont permis de partir en vacances totalement sereine. Je recommande Pawly à tous les amoureux des animaux !" },
+  { name: "Thomas L.", city: "Lyon 3e",  pet: "Prestataire certifié", avatar: "T", color: "from-violet-300 to-purple-400", rating: 5, text: "En tant que prestataire, Pawly m'a permis de développer mon activité et de rencontrer des familles formidables. Le système de paiement sécurisé est vraiment rassurant." },
+  { name: "Amélie R.", city: "Bordeaux", pet: "Abyssin",            avatar: "A", color: "from-orange-300 to-rose-400",  rating: 5, text: "Mon chat Mochi a été choyé pendant mes deux semaines de vacances. La gardienne lui a même appris des petits tours ! Le e-journal avec les photos m'a rendu heureuse chaque jour." },
+  { name: "Marc D.",   city: "Nantes",   pet: "Berger Australien",  avatar: "M", color: "from-emerald-300 to-teal-400", rating: 5, text: "Application très intuitive, réservation en 3 minutes chrono. Le suivi en temps réel et les messages rassurants du gardien ont fait toute la différence. Mon chien était aux anges !" },
+  { name: "Chloé B.",  city: "Marseille",pet: "Lapin nain",         avatar: "C", color: "from-pink-300 to-rose-400",    rating: 5, text: "Le e-journal avec les photos quotidiennes était absolument rassurant. Mon lapin était en de bonnes mains et je le voyais s'amuser chaque jour. Merci Pawly, vous avez changé ma façon de voyager !" },
 ];
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -137,30 +159,34 @@ function JournalVisual() {
       {/* Main card */}
       <div className="absolute top-5 left-5 right-5 rounded-2xl bg-white dark:bg-zinc-900 shadow-xl border border-zinc-100 dark:border-zinc-800 p-4">
         <div className="flex items-center gap-3 mb-3">
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-orange-300 to-rose-400 flex items-center justify-center text-base shrink-0">🐕</div>
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-orange-300 to-rose-400 flex items-center justify-center shrink-0">
+            <Dog className="h-4.5 w-4.5 text-white" aria-hidden />
+          </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100 truncate">Rocky a eu sa promenade ! 🐾</p>
+            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100 truncate">Rocky a eu sa promenade !</p>
             <p className="text-[10px] text-zinc-400">Marie · il y a 12 min</p>
           </div>
           <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse shrink-0" />
         </div>
         <div className="grid grid-cols-3 gap-1.5 mb-3">
-          {[
-            { bg: "from-sky-100 to-sky-50 dark:from-sky-900/20 dark:to-sky-900/10", e: "🌳" },
-            { bg: "from-amber-100 to-amber-50 dark:from-amber-900/20 dark:to-amber-900/10", e: "☀️" },
-            { bg: "from-teal-100 to-teal-50 dark:from-teal-900/20 dark:to-teal-900/10", e: "🐾" },
-          ].map(({ bg, e }, i) => (
-            <div key={i} className={`h-16 rounded-xl bg-gradient-to-br ${bg} flex items-center justify-center text-2xl`}>{e}</div>
+          {([
+            { bg: "from-sky-100 to-sky-50 dark:from-sky-900/20 dark:to-sky-900/10", Icon: TreePine, cls: "text-sky-400" },
+            { bg: "from-amber-100 to-amber-50 dark:from-amber-900/20 dark:to-amber-900/10", Icon: Sun, cls: "text-amber-400" },
+            { bg: "from-teal-100 to-teal-50 dark:from-teal-900/20 dark:to-teal-900/10", Icon: PawPrint, cls: "text-teal-400" },
+          ] as { bg: string; Icon: LucideIcon; cls: string }[]).map(({ bg, Icon, cls }, i) => (
+            <div key={i} className={`h-16 rounded-xl bg-gradient-to-br ${bg} flex items-center justify-center`}>
+              <Icon className={`h-6 w-6 ${cls}`} aria-hidden />
+            </div>
           ))}
         </div>
         <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5 text-[11px] text-zinc-500 dark:text-zinc-400 italic">
-          &ldquo;Il a adoré le parc ! Mangé de bon appétit 😊&rdquo;
+          &ldquo;Il a adoré le parc ! Mangé de bon appétit.&rdquo;
         </div>
       </div>
 
       {/* Location pill */}
       <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white dark:bg-zinc-900 shadow-md border border-zinc-100 dark:border-zinc-800 flex items-center gap-2.5 px-3 py-2.5">
-        <span className="text-base">📍</span>
+        <MapPin className="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" aria-hidden />
         <div>
           <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-100">Parc Montsouris, Paris</p>
           <p className="text-[10px] text-teal-600 dark:text-teal-400">Promenade en cours</p>
@@ -175,11 +201,11 @@ function JournalVisual() {
 }
 
 function VerifiedVisual() {
-  const checks = [
-    ["🪪", "Identité vérifiée"],
-    ["📋", "Casier judiciaire vierge"],
-    ["🏥", "Premiers secours animaux"],
-    ["🛡️", "Assurance responsabilité civile"],
+  const checks: [LucideIcon, string][] = [
+    [IdCard, "Identité vérifiée"],
+    [ClipboardList, "Casier judiciaire vierge"],
+    [Stethoscope, "Premiers secours animaux"],
+    [Shield, "Assurance responsabilité civile"],
   ];
   return (
     <div className="relative mx-auto h-[340px] w-[340px] max-w-full">
@@ -191,16 +217,16 @@ function VerifiedVisual() {
             <p className="font-bold text-sm text-zinc-800 dark:text-zinc-100">Julie M.</p>
             <p className="text-[11px] text-teal-600 dark:text-teal-400">Pet Sitter Pro · Paris 11e</p>
           </div>
-          <span className="ml-auto rounded-full bg-teal-50 dark:bg-teal-900/40 border border-teal-200 dark:border-teal-800 px-2 py-0.5 text-[10px] font-semibold text-teal-700 dark:text-teal-400">
-            ✓ Vérifié
+          <span className="ml-auto flex items-center gap-1 rounded-full bg-teal-50 dark:bg-teal-900/40 border border-teal-200 dark:border-teal-800 px-2 py-0.5 text-[10px] font-semibold text-teal-700 dark:text-teal-400">
+            <Check className="h-2.5 w-2.5" aria-hidden /> Vérifié
           </span>
         </div>
-        {checks.map(([icon, label]) => (
+        {checks.map(([Icon, label]) => (
           <div key={label} className="flex items-center gap-2.5 py-2 border-b border-zinc-50 dark:border-zinc-800 last:border-0">
-            <span className="text-sm w-5 text-center">{icon}</span>
+            <Icon className="h-4 w-4 shrink-0 text-zinc-400 dark:text-zinc-500" aria-hidden />
             <span className="text-xs text-zinc-600 dark:text-zinc-300 flex-1">{label}</span>
             <div className="h-5 w-5 rounded-full bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
-              <span className="text-green-500 text-[11px] font-bold">✓</span>
+              <Check className="h-3 w-3 text-green-500" aria-hidden />
             </div>
           </div>
         ))}
@@ -228,7 +254,9 @@ function PaymentVisual() {
           </div>
         </div>
         <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/40 p-3 mb-4 text-center">
-          <p className="text-[10px] text-amber-700 dark:text-amber-400">🔒 Paiement conservé sous séquestre jusqu&apos;à la fin de la garde</p>
+          <p className="flex items-center justify-center gap-1 text-[10px] text-amber-700 dark:text-amber-400">
+            <Lock className="h-3 w-3 shrink-0" aria-hidden /> Paiement conservé sous séquestre jusqu&apos;à la fin de la garde
+          </p>
         </div>
         <button className="w-full rounded-xl bg-teal-600 py-2.5 text-xs font-semibold text-white hover:bg-teal-700 transition">
           Payer en toute sécurité
@@ -252,7 +280,9 @@ function HeroCard() {
 
       {/* Top mini-badge */}
       <div className="absolute left-0 top-14 z-20 flex animate-[float1_3.5s_ease-in-out_infinite] items-center gap-2.5 rounded-2xl border border-white/60 bg-white/90 px-4 py-3 shadow-xl backdrop-blur-md dark:border-zinc-700/60 dark:bg-zinc-900/90">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-300 to-teal-400 text-base">🐕</div>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-300 to-teal-400">
+          <Dog className="h-4 w-4 text-white" aria-hidden />
+        </div>
         <div>
           <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">Réservation confirmée</p>
           <p className="text-[11px] text-zinc-400">Sophie · il y a 2 min</p>
@@ -264,7 +294,7 @@ function HeroCard() {
       <div className="relative z-10 w-72 overflow-hidden rounded-3xl border border-zinc-200/40 bg-white shadow-2xl shadow-zinc-900/10 dark:border-zinc-700/40 dark:bg-zinc-900 dark:shadow-black/40">
         <div className="relative bg-gradient-to-br from-teal-600 to-teal-400 p-6">
           <span className="absolute right-4 top-4 flex items-center gap-1 rounded-full border border-white/30 bg-white/20 px-3 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
-            ✓ Vérifié
+            <Check className="h-3 w-3" aria-hidden /> Vérifié
           </span>
           <div className="flex h-16 w-16 items-center justify-center rounded-full border-[3px] border-white/60 bg-gradient-to-br from-orange-300 to-rose-400 font-serif text-3xl font-bold text-white">
             J
@@ -282,12 +312,18 @@ function HeroCard() {
             ))}
           </div>
           <div className="mb-4 flex flex-wrap gap-1.5">
-            {["🐶 Chiens", "🐱 Chats", "🐰 Lapins"].map((tag) => (
-              <span key={tag} className="rounded-full bg-orange-50 px-3 py-1 text-[11px] font-medium text-orange-500 dark:bg-orange-900/20 dark:text-orange-400">{tag}</span>
+            {[["chien", "Chiens"], ["chat", "Chats"], ["lapin", "Lapins"]].map(([type, tag]) => (
+              <span key={tag} className="flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-[11px] font-medium text-orange-500 dark:bg-orange-900/20 dark:text-orange-400">
+                <AnimalIcon type={type} className="h-3 w-3" /> {tag}
+              </span>
             ))}
           </div>
           <div className="mb-4 flex items-center gap-2 text-sm">
-            <span className="text-amber-400 tracking-tight">★★★★★</span>
+            <span className="flex gap-0.5 text-amber-400">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} className="h-3.5 w-3.5 fill-current" aria-hidden />
+              ))}
+            </span>
             <span className="font-bold text-zinc-800 dark:text-zinc-100">4.99</span>
             <span className="text-zinc-400">(183 avis)</span>
           </div>
@@ -299,7 +335,9 @@ function HeroCard() {
 
       {/* Bottom mini-badge */}
       <div className="absolute bottom-10 right-0 z-20 flex animate-[float2_4.2s_ease-in-out_1s_infinite] items-center gap-2.5 rounded-2xl border border-white/60 bg-white/90 px-4 py-3 shadow-xl backdrop-blur-md dark:border-zinc-700/60 dark:bg-zinc-900/90">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-300 to-rose-400 text-base">🐱</div>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-300 to-rose-400">
+          <Cat className="h-4 w-4 text-white" aria-hidden />
+        </div>
         <div>
           <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">E-journal mis à jour</p>
           <p className="text-[11px] text-zinc-400">Caramel est en pleine forme !</p>
@@ -423,7 +461,7 @@ function NavBar() {
     >
       <div className="flex items-center justify-between px-6 py-4 lg:px-16">
         <Link href="/" className="flex items-center gap-2 font-serif text-2xl font-black tracking-tight text-teal-700 dark:text-teal-400">
-          <span>🐾</span><span>PAWLY</span>
+          <BrandPaw className="h-6 w-6" /><span>PAWLY</span>
         </Link>
 
         <ul className="hidden items-center gap-8 text-sm font-medium text-zinc-500 dark:text-zinc-400 lg:flex">
@@ -580,7 +618,11 @@ export default function Home() {
               ))}
             </div>
             <div>
-              <div className="flex gap-0.5 text-amber-400 text-xs">{"★★★★★"}</div>
+              <div className="flex gap-0.5 text-amber-400">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="h-3 w-3 fill-current" aria-hidden />
+                ))}
+              </div>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">+48 000 propriétaires satisfaits</p>
             </div>
           </div>
@@ -621,7 +663,7 @@ export default function Home() {
                   <div className="mb-2 font-serif text-6xl font-black text-zinc-100 transition group-hover:text-teal-50 dark:text-zinc-800 dark:group-hover:text-teal-950">
                     {step.num}
                   </div>
-                  <div className="mb-3 text-3xl">{step.emoji}</div>
+                  <step.Icon className="mb-3 h-7 w-7 text-teal-600 dark:text-teal-400" aria-hidden />
                   <h3 className="mb-2 font-serif text-xl font-bold text-zinc-800 dark:text-zinc-100">{step.title}</h3>
                   <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{step.desc}</p>
                 </div>
@@ -707,7 +749,7 @@ export default function Home() {
             <Reveal delay={0}>
               <div className="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-500 to-teal-700 p-9 text-white transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal-300/30 dark:hover:shadow-teal-900/50">
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 transition group-hover:opacity-100" />
-                <div className="mb-5 text-5xl">🐾</div>
+                <PawPrint className="mb-5 h-12 w-12" aria-hidden />
                 <h3 className="mb-2 font-serif text-2xl font-black">Je suis propriétaire</h3>
                 <p className="mb-7 text-sm leading-relaxed text-teal-100">Trouvez le gardien idéal pour votre animal. Vérifiés, assurés, passionnés.</p>
                 <Link href="/signup" className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-teal-700 transition hover:bg-teal-50">
@@ -719,7 +761,7 @@ export default function Home() {
             {/* Sitter */}
             <Reveal delay={120}>
               <div className="group relative overflow-hidden rounded-3xl border-2 border-zinc-200 bg-white p-9 transition-all duration-300 hover:-translate-y-1 hover:border-teal-300 hover:shadow-2xl dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-teal-700">
-                <div className="mb-5 text-5xl">🏠</div>
+                <House className="mb-5 h-12 w-12 text-teal-600 dark:text-teal-400" aria-hidden />
                 <h3 className="mb-2 font-serif text-2xl font-black text-zinc-800 dark:text-zinc-100">Je suis prestataire</h3>
                 <p className="mb-7 text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">Développez votre activité et rencontrez des familles formidables qui aiment leurs animaux.</p>
                 <Link href="/signup?role=sitter" className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-teal-400 dark:hover:text-white">
@@ -739,12 +781,14 @@ export default function Home() {
         <div className="mx-auto max-w-5xl">
           <div className="mb-12 grid gap-10 md:grid-cols-4">
             <div>
-              <p className="mb-3 font-serif text-xl font-black text-teal-700 dark:text-teal-400">🐾 PAWLY</p>
+              <p className="mb-3 flex items-center gap-1.5 font-serif text-xl font-black text-teal-700 dark:text-teal-400">
+                <BrandPaw className="h-5 w-5" /> PAWLY
+              </p>
               <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">La plateforme de garde d&apos;animaux qui met la confiance au cœur de chaque réservation.</p>
               <div className="mt-4 flex gap-3">
-                {["📘", "📸", "🐦"].map((icon, i) => (
-                  <a key={i} href="#" className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-sm transition hover:border-teal-400 dark:border-zinc-700 dark:hover:border-teal-600">
-                    {icon}
+                {([Globe, Camera, AtSign] as LucideIcon[]).map((Icon, i) => (
+                  <a key={i} href="#" className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-zinc-500 transition hover:border-teal-400 hover:text-teal-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-teal-600">
+                    <Icon className="h-3.5 w-3.5" aria-hidden />
                   </a>
                 ))}
               </div>
@@ -768,7 +812,9 @@ export default function Home() {
           </div>
           <div className="flex flex-col gap-2 border-t border-zinc-200/60 pt-6 dark:border-zinc-800/60 md:flex-row md:justify-between">
             <p className="text-xs text-zinc-400">&copy; {new Date().getFullYear()} PAWLY. Tous droits réservés.</p>
-            <p className="text-xs text-zinc-400">Fait avec 🐾 en France</p>
+            <p className="flex items-center gap-1 text-xs text-zinc-400">
+              Fait avec <PawPrint className="h-3 w-3" aria-hidden /> en France
+            </p>
           </div>
         </div>
       </footer>

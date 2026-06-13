@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { useUser, RedirectToSignIn } from "@clerk/nextjs";
 import { useAuth } from "@clerk/nextjs";
+import { Check, House, PawPrint, TriangleAlert } from "lucide-react";
 import { useSyncClerkUser } from "./sync-user";
 import { AuthNavbar } from "@/components/auth-navbar";
+import { AnimalIcon } from "@/components/icons";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -38,12 +40,12 @@ interface SupabaseProfile {
 }
 
 const ANIMAL_OPTIONS = [
-  { value: "chien",   label: "🐕 Chien" },
-  { value: "chat",    label: "🐱 Chat" },
-  { value: "lapin",   label: "🐰 Lapin" },
-  { value: "oiseau",  label: "🐦 Oiseau" },
-  { value: "rongeur", label: "🐹 Rongeur" },
-  { value: "reptile", label: "🦎 Reptile" },
+  { value: "chien",   label: "Chien" },
+  { value: "chat",    label: "Chat" },
+  { value: "lapin",   label: "Lapin" },
+  { value: "oiseau",  label: "Oiseau" },
+  { value: "rongeur", label: "Rongeur" },
+  { value: "reptile", label: "Reptile" },
 ];
 
 // ── Status badge ──────────────────────────────────────────────────────────────
@@ -216,7 +218,7 @@ export default function ProfilePage() {
         {/* ── Email verification banner ── */}
         {!isEmailVerified && user && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400">
-            <span className="mt-0.5 shrink-0 text-base">⚠️</span>
+            <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
             <p>
               Votre adresse email n&apos;est pas encore vérifiée.{" "}
               <span className="font-semibold">Vérifiez votre boîte mail</span> et cliquez sur le lien de confirmation. Sans vérification, certaines fonctionnalités peuvent être limitées.
@@ -289,9 +291,9 @@ export default function ProfilePage() {
             </h2>
             <div className="mb-8 grid gap-3 sm:grid-cols-2">
               {[
-                { value: "proprietaire", emoji: "🐾", title: "Propriétaire d'animal",  sub: "Je cherche un gardien pour mon animal" },
-                { value: "prestataire",  emoji: "🏠", title: "Prestataire de garde",   sub: "Je propose des services de garde" },
-              ].map(({ value, emoji, title, sub }) => (
+                { value: "proprietaire", Icon: PawPrint, title: "Propriétaire d'animal",  sub: "Je cherche un gardien pour mon animal" },
+                { value: "prestataire",  Icon: House,    title: "Prestataire de garde",   sub: "Je propose des services de garde" },
+              ].map(({ value, Icon, title, sub }) => (
                 <label
                   key={value}
                   className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition
@@ -309,7 +311,9 @@ export default function ProfilePage() {
                     className="mt-0.5 accent-teal-600"
                   />
                   <div>
-                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{emoji} {title}</p>
+                    <p className="flex items-center gap-1.5 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                      <Icon className="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" aria-hidden /> {title}
+                    </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">{sub}</p>
                   </div>
                 </label>
@@ -410,7 +414,7 @@ export default function ProfilePage() {
                             }
                             className="sr-only"
                           />
-                          {label}
+                          <AnimalIcon type={value} className="h-3.5 w-3.5" /> {label}
                         </label>
                       );
                     })}
@@ -426,7 +430,12 @@ export default function ProfilePage() {
                   ? "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-400"
                   : "border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400"
                 }`}>
-                {feedback.ok ? "✓ " : "⚠ "}{feedback.msg}
+                {feedback.ok ? (
+                  <Check className="mr-1 inline-block h-4 w-4 align-text-bottom" aria-hidden />
+                ) : (
+                  <TriangleAlert className="mr-1 inline-block h-4 w-4 align-text-bottom" aria-hidden />
+                )}
+                {feedback.msg}
               </div>
             )}
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { resolveAccount } from "@/lib/account";
 
 // GET /api/veterinaire — the current owner's vet record (or null).
 export async function GET() {
@@ -9,13 +10,9 @@ export async function GET() {
 
   const supabase = createServerSupabase();
 
-  const { data: me } = await supabase
-    .from("utilisateur")
-    .select("id_user")
-    .eq("clerk_id", userId)
-    .maybeSingle();
-
-  if (!me) return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
+  const account = await resolveAccount(supabase, userId);
+  if (!account.ok) return NextResponse.json({ error: account.error }, { status: account.status });
+  const me = account.user;
 
   const { data: veterinaire, error } = await supabase
     .from("info_veterinaire")
@@ -49,13 +46,9 @@ export async function PUT(request: Request) {
 
   const supabase = createServerSupabase();
 
-  const { data: me } = await supabase
-    .from("utilisateur")
-    .select("id_user")
-    .eq("clerk_id", userId)
-    .maybeSingle();
-
-  if (!me) return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
+  const account = await resolveAccount(supabase, userId);
+  if (!account.ok) return NextResponse.json({ error: account.error }, { status: account.status });
+  const me = account.user;
 
   const record = {
     proprietaire_id: me.id_user,

@@ -26,7 +26,7 @@ export async function sendConfirmationEmail(offre: OffreDetails) {
   await resend.emails.send({
     from:    FROM,
     to:      prop.email,
-    subject: `✅ Demande de garde acceptée — ${nomAnimal}`,
+    subject: `Demande de garde acceptée — ${nomAnimal}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
         <h2 style="color:#0d9488">Bonne nouvelle, ${prop.prenom} !</h2>
@@ -37,7 +37,7 @@ export async function sendConfirmationEmail(offre: OffreDetails) {
           ${tarifTotal != null ? `<tr><td style="padding:8px;color:#6b7280">Tarif total</td><td style="padding:8px;font-weight:600;color:#0d9488">${tarifTotal} €</td></tr>` : ""}
         </table>
         <p style="color:#6b7280;font-size:14px">Vous pouvez contacter ${prest.prenom} directement pour organiser la prise en charge.</p>
-        <p style="color:#0d9488;font-weight:700">L'équipe PAWLY 🐾</p>
+        <p style="color:#0d9488;font-weight:700">L'équipe PAWLY</p>
       </div>`,
   });
 }
@@ -47,7 +47,7 @@ export async function sendPaymentReceiptEmail(offre: OffreDetails) {
   await resend.emails.send({
     from:    FROM,
     to:      prop.email,
-    subject: `🧾 Reçu de paiement — garde de ${nomAnimal}`,
+    subject: `Reçu de paiement — garde de ${nomAnimal}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
         <h2 style="color:#0d9488">Merci, ${prop.prenom} !</h2>
@@ -58,7 +58,7 @@ export async function sendPaymentReceiptEmail(offre: OffreDetails) {
           ${tarifTotal != null ? `<tr><td style="padding:8px;color:#6b7280">Montant payé</td><td style="padding:8px;font-weight:700;color:#0d9488">${tarifTotal} €</td></tr>` : ""}
         </table>
         <p style="color:#6b7280;font-size:14px">Le montant est conservé sous séquestre et libéré au prestataire à la fin de la prestation.</p>
-        <p style="color:#0d9488;font-weight:700">L'équipe PAWLY 🐾</p>
+        <p style="color:#0d9488;font-weight:700">L'équipe PAWLY</p>
       </div>`,
   });
 }
@@ -68,7 +68,7 @@ export async function sendPaymentNoticeToSitter(offre: OffreDetails & { prestata
   await resend.emails.send({
     from:    FROM,
     to:      prestataireEmail,
-    subject: `💰 Paiement reçu — garde de ${nomAnimal}`,
+    subject: `Paiement reçu — garde de ${nomAnimal}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
         <h2 style="color:#0d9488">Bonne nouvelle, ${prest.prenom} !</h2>
@@ -78,7 +78,7 @@ export async function sendPaymentNoticeToSitter(offre: OffreDetails & { prestata
           ${tarifTotal != null ? `<tr style="background:#f9fafb"><td style="padding:8px;color:#6b7280">Montant</td><td style="padding:8px;font-weight:700;color:#0d9488">${tarifTotal} €</td></tr>` : ""}
         </table>
         <p style="color:#6b7280;font-size:14px">Le montant vous sera libéré à la fin de la prestation.</p>
-        <p style="color:#0d9488;font-weight:700">L'équipe PAWLY 🐾</p>
+        <p style="color:#0d9488;font-weight:700">L'équipe PAWLY</p>
       </div>`,
   });
 }
@@ -88,7 +88,7 @@ export async function sendCancellationEmail(offre: OffreDetails & { refunded: bo
   await resend.emails.send({
     from:    FROM,
     to:      prop.email,
-    subject: `🚫 Réservation annulée — ${nomAnimal}`,
+    subject: `Réservation annulée — ${nomAnimal}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
         <h2 style="color:#dc2626">Réservation annulée</h2>
@@ -100,7 +100,7 @@ export async function sendCancellationEmail(offre: OffreDetails & { refunded: bo
         ${refunded
           ? `<p style="color:#0d9488;font-weight:600">Votre paiement a été intégralement remboursé. Le remboursement apparaîtra sous quelques jours sur votre moyen de paiement.</p>`
           : `<p style="color:#6b7280;font-size:14px">Aucun paiement n'avait été effectué pour cette réservation.</p>`}
-        <p style="color:#0d9488;font-weight:700;margin-top:24px">L'équipe PAWLY 🐾</p>
+        <p style="color:#0d9488;font-weight:700;margin-top:24px">L'équipe PAWLY</p>
       </div>`,
   });
 }
@@ -110,7 +110,7 @@ export async function sendRefusalEmail(offre: OffreDetails) {
   await resend.emails.send({
     from:    FROM,
     to:      prop.email,
-    subject: `❌ Demande de garde refusée — ${nomAnimal}`,
+    subject: `Demande de garde refusée — ${nomAnimal}`,
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
         <h2 style="color:#dc2626">Demande de garde refusée</h2>
@@ -125,7 +125,7 @@ export async function sendRefusalEmail(offre: OffreDetails) {
            style="display:inline-block;background:#0d9488;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:8px">
           Trouver un autre prestataire
         </a>
-        <p style="color:#0d9488;font-weight:700;margin-top:24px">L'équipe PAWLY 🐾</p>
+        <p style="color:#0d9488;font-weight:700;margin-top:24px">L'équipe PAWLY</p>
       </div>`,
   });
 }

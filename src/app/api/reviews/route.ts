@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { validateReviewInput, reviewabilityError, computeNewAverage } from "@/lib/reviews";
+import { resolveAccount } from "@/lib/account";
 
 // POST /api/reviews — the owner rates a completed (accepted + paid) booking.
 export async function POST(request: Request) {
@@ -20,12 +21,9 @@ export async function POST(request: Request) {
 
   const supabase = createServerSupabase();
 
-  const { data: me } = await supabase
-    .from("utilisateur")
-    .select("id_user")
-    .eq("clerk_id", userId)
-    .maybeSingle();
-  if (!me) return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
+  const account = await resolveAccount(supabase, userId);
+  if (!account.ok) return NextResponse.json({ error: account.error }, { status: account.status });
+  const me = account.user;
 
   // The booking must belong to this owner.
   const { data: offre, error: offreError } = await supabase

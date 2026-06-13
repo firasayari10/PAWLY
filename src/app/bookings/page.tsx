@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { RedirectToSignIn, useAuth } from "@clerk/nextjs";
+import { Check, CreditCard, History, Inbox, Lock, MessageCircle, Star, Stethoscope, TriangleAlert, X } from "lucide-react";
 import { AuthNavbar } from "@/components/auth-navbar";
+import { AnimalIcon } from "@/components/icons";
 import { ReviewForm } from "@/components/review-form";
+import { ChatBox } from "@/components/chat-box";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -48,10 +51,6 @@ const EMPTY_VET: Veterinaire = {
   nom_veterinaire: "", nom_clinique: "", telephone: "", email: "", adresse: "", notes: "",
 };
 
-const ANIMAL_EMOJI: Record<string, string> = {
-  chien: "🐕", chat: "🐱", lapin: "🐰", oiseau: "🐦", rongeur: "🐹", reptile: "🦎",
-};
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 }
@@ -81,7 +80,7 @@ function StatutBadge({ statut }: { statut: string }) {
 
 function PaiementBadge({ statut }: { statut: string | null }) {
   if (statut === "paye") {
-    return <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/30 dark:text-teal-400">🔒 Payée</span>;
+    return <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/30 dark:text-teal-400"><Lock className="h-3 w-3" aria-hidden /> Payée</span>;
   }
   if (statut === "rembourse") {
     return <span className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-100 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">Remboursée</span>;
@@ -144,7 +143,9 @@ function VetForm() {
         className="flex w-full items-center justify-between gap-3 text-left"
       >
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-xl dark:bg-teal-900/30">🏥</span>
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400">
+            <Stethoscope className="h-5 w-5" aria-hidden />
+          </span>
           <div>
             <p className="font-serif text-base font-bold text-zinc-800 dark:text-zinc-100">Coordonnées vétérinaire</p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -184,7 +185,12 @@ function VetForm() {
 
           {feedback && (
             <div className={`sm:col-span-2 rounded-xl border px-4 py-2.5 text-sm font-medium ${feedback.ok ? "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-400" : "border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400"}`}>
-              {feedback.ok ? "✓ " : "⚠ "}{feedback.msg}
+              {feedback.ok ? (
+                <Check className="mr-1 inline-block h-4 w-4 align-text-bottom" aria-hidden />
+              ) : (
+                <TriangleAlert className="mr-1 inline-block h-4 w-4 align-text-bottom" aria-hidden />
+              )}
+              {feedback.msg}
             </div>
           )}
 
@@ -217,7 +223,9 @@ function BookingCard({
   const canCancel = b.statut === "en_attente" || b.statut === "accepte";
   const isPaid = b.statut === "accepte" && b.statut_paiement === "paye";
   const alreadyReviewed = (b.avis?.length ?? 0) > 0;
+  const canChat = b.statut === "accepte";
   const [showReview, setShowReview] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700/60 dark:bg-zinc-800">
@@ -242,7 +250,9 @@ function BookingCard({
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-700/40">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Animal</p>
-          <p className="mt-0.5 font-semibold text-zinc-800 dark:text-zinc-100">{ANIMAL_EMOJI[b.type_animal] ?? "🐾"} {b.nom_animal}</p>
+          <p className="mt-0.5 flex items-center gap-1.5 font-semibold text-zinc-800 dark:text-zinc-100">
+            <AnimalIcon type={b.type_animal} className="h-4 w-4 text-teal-600 dark:text-teal-400" /> {b.nom_animal}
+          </p>
         </div>
         <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-700/40">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Début</p>
@@ -266,26 +276,41 @@ function BookingCard({
         >
           {paying ? (
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-          ) : "🔒"}
+          ) : (
+            <Lock className="h-4 w-4" aria-hidden />
+          )}
           {paying ? "Redirection vers le paiement…" : `Payer en sécurité — ${b.tarif_total} €`}
         </button>
       )}
 
       {isPaid && (
-        <p className="mt-4 rounded-xl border border-teal-100 bg-teal-50 px-4 py-2.5 text-center text-sm font-medium text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-400">
-          ✓ Réservation confirmée et payée. Bon séjour à {b.nom_animal} !
+        <p className="mt-4 flex items-center justify-center gap-1.5 rounded-xl border border-teal-100 bg-teal-50 px-4 py-2.5 text-center text-sm font-medium text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-400">
+          <Check className="h-4 w-4 shrink-0" aria-hidden /> Réservation confirmée et payée. Bon séjour à {b.nom_animal} !
         </p>
       )}
 
-      {/* Actions row: review (paid bookings) + cancel */}
-      {(isPaid && !alreadyReviewed) || canCancel ? (
+      {/* Actions row: chat (accepted) + review (paid bookings) + cancel */}
+      {(isPaid && !alreadyReviewed) || canCancel || canChat ? (
         <div className="mt-4 flex flex-wrap gap-3">
+          {canChat && (
+            <button
+              onClick={() => setShowChat((s) => !s)}
+              className="rounded-xl border border-teal-300 bg-teal-50 px-5 py-2 text-sm font-semibold text-teal-700 transition hover:bg-teal-100 dark:border-teal-700/50 dark:bg-teal-900/20 dark:text-teal-400 dark:hover:bg-teal-900/30"
+            >
+              <span className="flex items-center gap-1.5">
+                <MessageCircle className="h-4 w-4" aria-hidden />
+                {showChat ? "Masquer la discussion" : "Discuter"}
+              </span>
+            </button>
+          )}
           {isPaid && !alreadyReviewed && (
             <button
               onClick={() => setShowReview((s) => !s)}
               className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-100 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30"
             >
-              ★ Noter le prestataire
+              <span className="flex items-center gap-1.5">
+                <Star className="h-4 w-4 fill-current" aria-hidden /> Noter le prestataire
+              </span>
             </button>
           )}
           {canCancel && (
@@ -301,7 +326,9 @@ function BookingCard({
       ) : null}
 
       {alreadyReviewed && (
-        <p className="mt-3 text-sm font-medium text-amber-600 dark:text-amber-400">★ Vous avez noté cette réservation.</p>
+        <p className="mt-3 flex items-center gap-1.5 text-sm font-medium text-amber-600 dark:text-amber-400">
+          <Star className="h-4 w-4 fill-current" aria-hidden /> Vous avez noté cette réservation.
+        </p>
       )}
 
       {showReview && isPaid && !alreadyReviewed && (
@@ -309,6 +336,14 @@ function BookingCard({
           offreId={b.id}
           prestataireName={sitter ? `${sitter.prenom} ${sitter.nom}` : "ce prestataire"}
           onSubmitted={onReviewed}
+        />
+      )}
+
+      {showChat && canChat && (
+        <ChatBox
+          offreId={b.id}
+          peerName={sitter ? `${sitter.prenom} ${sitter.nom}` : undefined}
+          onClose={() => setShowChat(false)}
         />
       )}
     </div>
@@ -454,15 +489,17 @@ export default function BookingsPage() {
             href="/bookings/history"
             className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition hover:border-teal-400 hover:text-teal-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-teal-500 dark:hover:text-teal-400"
           >
-            🕑 Historique
+            <History className="h-4 w-4" aria-hidden /> Historique
           </Link>
         </div>
 
         {toast && (
           <div className={`mb-6 flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium ${toast.ok ? "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-400" : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400"}`}>
-            <span>{toast.ok ? "✓" : "⚠"}</span>
+            {toast.ok ? <Check className="h-4 w-4 shrink-0" aria-hidden /> : <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden />}
             <span>{toast.msg}</span>
-            <button onClick={() => setToast(null)} className="ml-auto text-current opacity-60 hover:opacity-100" aria-label="Fermer">×</button>
+            <button onClick={() => setToast(null)} className="ml-auto text-current opacity-60 hover:opacity-100" aria-label="Fermer">
+              <X className="h-3.5 w-3.5" aria-hidden />
+            </button>
           </div>
         )}
 
@@ -473,7 +510,10 @@ export default function BookingsPage() {
 
         {aPayer > 0 && (
           <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-400">
-            💳 {aPayer} réservation{aPayer > 1 ? "s" : ""} acceptée{aPayer > 1 ? "s" : ""} en attente de paiement.
+            <span className="flex items-center gap-1.5">
+              <CreditCard className="h-4 w-4 shrink-0" aria-hidden />
+              {aPayer} réservation{aPayer > 1 ? "s" : ""} acceptée{aPayer > 1 ? "s" : ""} en attente de paiement.
+            </span>
           </div>
         )}
 
@@ -491,7 +531,7 @@ export default function BookingsPage() {
 
         {!loading && !error && bookings.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <span className="text-5xl">📭</span>
+            <Inbox className="h-12 w-12 text-zinc-300 dark:text-zinc-600" aria-hidden />
             <p className="font-serif text-lg font-bold text-zinc-700 dark:text-zinc-300">Aucune réservation pour le moment</p>
             <p className="max-w-xs text-sm text-zinc-400">Trouvez un gardien et envoyez votre première demande de garde.</p>
             <Link href="/search" className="mt-2 rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700">

@@ -52,6 +52,14 @@ describe("PUT /api/bookings/:id/cancel", () => {
     expect(res.status).toBe(401);
   });
 
+  it("403 when the account is suspended", async () => {
+    vi.mocked(createServerSupabase).mockReturnValue(
+      fakeSupabase({ me: { id_user: "u1", statut_compte: "suspendu" } }) as never,
+    );
+    const res = await PUT(new Request("http://x", { method: "PUT" }), params("o1"));
+    expect(res.status).toBe(403);
+  });
+
   it("404 when the booking is not found", async () => {
     vi.mocked(createServerSupabase).mockReturnValue(fakeSupabase({ me: { id_user: "u1" }, offre: null }) as never);
     const res = await PUT(new Request("http://x", { method: "PUT" }), params("o1"));

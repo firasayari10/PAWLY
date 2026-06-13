@@ -4,6 +4,7 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import { getStripe } from "@/lib/stripe";
 import { cancellationPolicy } from "@/lib/cancellation";
 import { sendCancellationEmail } from "@/lib/email";
+import { resolveAccount } from "@/lib/account";
 
 // PUT /api/bookings/:id/cancel — owner cancels a booking, refunding if it was paid.
 export async function PUT(
@@ -16,12 +17,9 @@ export async function PUT(
   const { id } = await params;
   const supabase = createServerSupabase();
 
-  const { data: me } = await supabase
-    .from("utilisateur")
-    .select("id_user")
-    .eq("clerk_id", userId)
-    .maybeSingle();
-  if (!me) return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
+  const account = await resolveAccount(supabase, userId);
+  if (!account.ok) return NextResponse.json({ error: account.error }, { status: account.status });
+  const me = account.user;
 
   const { data: offre, error: offreError } = await supabase
     .from("offre_garde")

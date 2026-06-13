@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Star, TriangleAlert } from "lucide-react";
 
 function StarInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   const [hover, setHover] = useState(0);
@@ -17,9 +18,12 @@ function StarInput({ value, onChange }: { value: number; onChange: (n: number) =
           onMouseEnter={() => setHover(n)}
           onMouseLeave={() => setHover(0)}
           onClick={() => onChange(n)}
-          className="text-2xl leading-none text-amber-400 transition-transform hover:scale-110"
+          className="text-amber-400 transition-transform hover:scale-110"
         >
-          <span className={n <= active ? "opacity-100" : "opacity-30"}>★</span>
+          <Star
+            className={`h-6 w-6 fill-current ${n <= active ? "opacity-100" : "opacity-30"}`}
+            aria-hidden
+          />
         </button>
       ))}
     </div>
@@ -76,7 +80,9 @@ export function ReviewForm({
         className="mt-3 w-full resize-none rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm text-zinc-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
       />
       {error && (
-        <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">⚠ {error}</p>
+        <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-red-600 dark:text-red-400">
+          <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden /> {error}
+        </p>
       )}
       <button
         type="submit"

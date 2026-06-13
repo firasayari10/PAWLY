@@ -32,6 +32,21 @@ describe("GET /api/bookings/history", () => {
     expect((await GET()).status).toBe(401);
   });
 
+  it("403 when the account is suspended", async () => {
+    vi.mocked(createServerSupabase).mockReturnValue({
+      from() {
+        const b: Record<string, unknown> = {
+          select: () => b,
+          eq: () => b,
+          order: async () => ({ data: [], error: null }),
+          maybeSingle: async () => ({ data: { id_user: "u1", statut_compte: "suspendu" }, error: null }),
+        };
+        return b;
+      },
+    } as never);
+    expect((await GET()).status).toBe(403);
+  });
+
   it("returns only finished bookings (cancelled, refused, or stay ended)", async () => {
     const future = "2999-01-01";
     const past = "2000-01-01";

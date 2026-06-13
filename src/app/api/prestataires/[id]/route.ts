@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { firstEmbedded, type RowWithPrestataireProfil } from "@/lib/prestataire";
 
 export async function GET(
   _request: Request,
@@ -29,9 +30,8 @@ export async function GET(
   if (userError) return NextResponse.json({ error: userError.message }, { status: 500 });
   if (!user)     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const profil = Array.isArray((user as any).prestataire_profil)
-    ? (user as any).prestataire_profil[0]
-    : (user as any).prestataire_profil;
+  const userRow = user as RowWithPrestataireProfil;
+  const profil = firstEmbedded(userRow.prestataire_profil);
 
   // Reviews for this prestataire, with the author's first name + initial.
   const { data: avis } = await supabase
@@ -43,5 +43,5 @@ export async function GET(
     .eq("prestataire_id", id)
     .order("created_at", { ascending: false });
 
-  return NextResponse.json({ prestataire: { ...(user as any), profil }, avis: avis ?? [] });
+  return NextResponse.json({ prestataire: { ...userRow, profil }, avis: avis ?? [] });
 }

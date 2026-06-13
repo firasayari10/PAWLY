@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { sendConfirmationEmail, sendRefusalEmail } from "@/lib/email";
+import { resolveAccount } from "@/lib/account";
 
 export async function PUT(
   request: Request,
@@ -26,14 +27,12 @@ export async function PUT(
 
   const supabase = createServerSupabase();
 
-  // Verify the caller is the prestataire for this offer
-  const { data: me } = await supabase
-    .from("utilisateur")
-    .select("id_user, prenom, nom, role")
-    .eq("clerk_id", userId)
-    .maybeSingle();
+  // Verify the caller is the prestataire for this offer (and not suspended).
+  const account = await resolveAccount(supabase, userId);
+  if (!account.ok) return NextResponse.json({ error: account.error }, { status: account.status });
+  const me = account.user;
 
-  if (!me || me.role !== "prestataire") {
+  if (me.role !== "prestataire") {
     return NextResponse.json({ error: "Réservé aux prestataires." }, { status: 403 });
   }
 
@@ -41,7 +40,7 @@ export async function PUT(
     .from("offre_garde")
     .select(`
       id, type_animal, nom_animal, nb_animaux,
-      date_debut, date_fin, tarif_total, statut,
+      date_debut, date_fin, tarif_total, statut, proprietaire_id,
       proprietaire:proprietaire_id (
         prenom, nom, email
       )
@@ -65,6 +64,18 @@ export async function PUT(
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
+  // On acceptance, provision the owner↔sitter chat (idempotent). The chat routes
+  // also lazy-create it, so a failure here is non-fatal.
+  if (newStatut === "accepte") {
+    const { error: convError } = await supabase
+      .from("chat_conversation")
+      .upsert(
+        { offre_id: offre.id, proprietaire_id: offre.proprietaire_id, prestataire_id: me.id_user },
+        { onConflict: "offre_id" },
+      );
+    if (convError) console.error("[DASHBOARD] Conversation provisioning error:", convError.message);
+  }
+
   // Send email notification — non-blocking, failures are logged but don't break the response
   const prop = Array.isArray(offre.proprietaire) ? offre.proprietaire[0] : offre.proprietaire;
   if (prop?.email) {
@@ -75,7 +86,7 @@ export async function PUT(
       dateDebut:    offre.date_debut,
       dateFin:      offre.date_fin,
       tarifTotal:   offre.tarif_total,
-      prestataire:  { prenom: me.prenom, nom: me.nom },
+      prestataire:  { prenom: me.prenom ?? "", nom: me.nom ?? "" },
       proprietaire: { prenom: prop.prenom, nom: prop.nom, email: prop.email },
     };
     try {

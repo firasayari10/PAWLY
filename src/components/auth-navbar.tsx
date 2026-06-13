@@ -6,11 +6,13 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { UserButton } from "@clerk/nextjs";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BrandPaw } from "@/components/icons";
 
 export function AuthNavbar() {
   const { isLoaded, isSignedIn } = useAuth();
   const pathname = usePathname();
   const [isPrestataire, setIsPrestataire] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   // Fetch role once on mount (and whenever the route changes so profile edits reflect immediately)
@@ -22,6 +24,7 @@ export function AuthNavbar() {
         setIsPrestataire(
           profile?.role === "prestataire" && profile?.prestataire_profil != null,
         );
+        setIsAdmin(profile?.role === "admin");
       })
       .catch(() => {});
   }, [isLoaded, isSignedIn, pathname]);
@@ -30,7 +33,10 @@ export function AuthNavbar() {
     { href: "/landing", label: "Accueil" },
     { href: "/search", label: "Rechercher" },
     { href: "/bookings", label: "Mes réservations" },
+    { href: "/journal", label: "Journal" },
+    { href: "/veterinaires", label: "Vétérinaires" },
     ...(isPrestataire ? [{ href: "/dashboard", label: "Dashboard" }] : []),
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
     { href: "/profile", label: "Mon profil" },
   ];
 
@@ -43,7 +49,7 @@ export function AuthNavbar() {
           href="/landing"
           className="flex items-center gap-2 font-serif text-xl font-black text-teal-700 dark:text-teal-400"
         >
-          <span>🐾</span><span>PAWLY</span>
+          <BrandPaw className="h-5 w-5" /><span>PAWLY</span>
         </Link>
 
         {/* Desktop links */}

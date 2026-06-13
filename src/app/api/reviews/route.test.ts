@@ -58,6 +58,13 @@ describe("POST /api/reviews", () => {
     expect(res.status).toBe(400);
   });
 
+  it("403 when the account is suspended", async () => {
+    vi.mocked(createServerSupabase).mockReturnValue(
+      fakeSupabase({ utilisateur: { row: { id_user: "u1", statut_compte: "suspendu" } } }) as never,
+    );
+    expect((await POST(req({ offre_id: "o1", note: 5 }))).status).toBe(403);
+  });
+
   it("404 when the profile is missing", async () => {
     vi.mocked(createServerSupabase).mockReturnValue(fakeSupabase({ utilisateur: { row: null } }) as never);
     expect((await POST(req({ offre_id: "o1", note: 5 }))).status).toBe(404);

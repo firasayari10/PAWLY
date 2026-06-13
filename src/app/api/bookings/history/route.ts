@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { resolveAccount } from "@/lib/account";
 
 // GET /api/bookings/history — the owner's finished bookings:
 // refused, cancelled, or a confirmed stay whose end date has passed.
@@ -10,13 +11,9 @@ export async function GET() {
 
   const supabase = createServerSupabase();
 
-  const { data: me, error: meError } = await supabase
-    .from("utilisateur")
-    .select("id_user")
-    .eq("clerk_id", userId)
-    .maybeSingle();
-  if (meError) return NextResponse.json({ error: meError.message }, { status: 500 });
-  if (!me) return NextResponse.json({ error: "Profil introuvable." }, { status: 404 });
+  const account = await resolveAccount(supabase, userId);
+  if (!account.ok) return NextResponse.json({ error: account.error }, { status: account.status });
+  const me = account.user;
 
   const { data: rows, error } = await supabase
     .from("offre_garde")

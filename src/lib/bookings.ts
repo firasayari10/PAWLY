@@ -64,17 +64,28 @@ export function payabilityError(offre: {
   return null;
 }
 
+/** Largest number of animals a single booking may cover. */
+export const MAX_ANIMAUX = 20;
+
 /** Validate the payload for creating a booking/offer. Returns an error or null. */
 export function validateBookingInput(input: {
   prestataire_id?: string;
   type_animal?: string;
   nom_animal?: string;
+  nb_animaux?: number;
   date_debut?: string;
   date_fin?: string;
 }): string | null {
-  const { prestataire_id, type_animal, nom_animal, date_debut, date_fin } = input;
+  const { prestataire_id, type_animal, nom_animal, nb_animaux, date_debut, date_fin } = input;
   if (!prestataire_id || !type_animal || !nom_animal || !date_debut || !date_fin) {
     return "Champs requis manquants.";
+  }
+  // nb_animaux is optional (defaults to 1), but when supplied it must be a sane
+  // positive integer — guards against negative, fractional or absurd values.
+  if (nb_animaux !== undefined) {
+    if (!Number.isInteger(nb_animaux) || nb_animaux < 1 || nb_animaux > MAX_ANIMAUX) {
+      return `Le nombre d'animaux doit être un entier entre 1 et ${MAX_ANIMAUX}.`;
+    }
   }
   const start = new Date(date_debut).getTime();
   const end = new Date(date_fin).getTime();

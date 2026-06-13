@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { RedirectToSignIn, useAuth } from "@clerk/nextjs";
+import { MapPin, Search, X } from "lucide-react";
 import { AuthNavbar } from "@/components/auth-navbar";
+import { AnimalIcon } from "@/components/icons";
 import type { MapMarker } from "@/components/map-view";
 
 // Leaflet must be client-only
@@ -40,17 +42,13 @@ interface Prestataire {
 
 const ANIMAL_OPTIONS = [
   { value: "",         label: "Tous les animaux" },
-  { value: "chien",    label: "🐕 Chien" },
-  { value: "chat",     label: "🐱 Chat" },
-  { value: "lapin",    label: "🐰 Lapin" },
-  { value: "oiseau",   label: "🐦 Oiseau" },
-  { value: "rongeur",  label: "🐹 Rongeur" },
-  { value: "reptile",  label: "🦎 Reptile" },
+  { value: "chien",    label: "Chien" },
+  { value: "chat",     label: "Chat" },
+  { value: "lapin",    label: "Lapin" },
+  { value: "oiseau",   label: "Oiseau" },
+  { value: "rongeur",  label: "Rongeur" },
+  { value: "reptile",  label: "Reptile" },
 ];
-
-const ANIMAL_EMOJI: Record<string, string> = {
-  chien: "🐕", chat: "🐱", lapin: "🐰", oiseau: "🐦", rongeur: "🐹", reptile: "🦎",
-};
 
 // ── Stars ─────────────────────────────────────────────────────────────────────
 
@@ -97,7 +95,9 @@ function PrestaireCard({ p, highlighted, onHover }: { p: Prestataire; highlighte
             <p className="font-serif text-base font-bold text-zinc-800 group-hover:text-teal-700 dark:text-zinc-100 dark:group-hover:text-teal-400">
               {p.prenom} {p.nom}
             </p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">📍 {p.ville} {p.code_postal}</p>
+            <p className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+              <MapPin className="h-3 w-3 shrink-0" aria-hidden /> {p.ville} {p.code_postal}
+            </p>
           </div>
           <div className="shrink-0 text-right">
             <p className="font-bold text-teal-600 dark:text-teal-400">{p.profil.tarif_jour} €</p>
@@ -117,8 +117,8 @@ function PrestaireCard({ p, highlighted, onHover }: { p: Prestataire; highlighte
         {p.profil.types_animaux.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {p.profil.types_animaux.slice(0, 4).map((a) => (
-              <span key={a} className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-500 dark:bg-orange-900/20 dark:text-orange-400">
-                {ANIMAL_EMOJI[a] ?? "🐾"} {a}
+              <span key={a} className="flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-500 dark:bg-orange-900/20 dark:text-orange-400">
+                <AnimalIcon type={a} className="h-3 w-3" /> {a}
               </span>
             ))}
           </div>
@@ -218,9 +218,10 @@ export default function SearchPage() {
                 <button
                   type="button"
                   onClick={() => setVille("")}
+                  aria-label="Effacer la ville"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
                 >
-                  ×
+                  <X className="h-3.5 w-3.5" aria-hidden />
                 </button>
               )}
             </div>
@@ -323,7 +324,7 @@ export default function SearchPage() {
 
             {!loading && searched && results.length === 0 && (
               <div className="flex flex-col items-center gap-3 py-16 text-center">
-                <span className="text-5xl">🔍</span>
+                <Search className="h-12 w-12 text-zinc-300 dark:text-zinc-600" aria-hidden />
                 <p className="font-serif text-lg font-bold text-zinc-700 dark:text-zinc-300">Aucun prestataire trouvé</p>
                 <p className="max-w-xs text-sm text-zinc-400">
                   Essayez avec une ville différente ou élargissez vos critères.

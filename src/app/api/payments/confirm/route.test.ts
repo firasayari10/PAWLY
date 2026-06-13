@@ -82,6 +82,13 @@ describe("POST /api/payments/confirm", () => {
     expect((await POST(req({ offre_id: "o1" }))).status).toBe(404);
   });
 
+  it("403 when the account is suspended", async () => {
+    vi.mocked(createServerSupabase).mockReturnValue(
+      fakeSupabase({ me: { id_user: "u1", statut_compte: "suspendu" } }) as never,
+    );
+    expect((await POST(req({ offre_id: "o1" }))).status).toBe(403);
+  });
+
   it("409 when there is no stored session", async () => {
     vi.mocked(createServerSupabase).mockReturnValue(
       fakeSupabase({ me: { id_user: "u1" }, offre: { id: "o1", statut_paiement: "non_paye", stripe_session_id: null } }) as never,

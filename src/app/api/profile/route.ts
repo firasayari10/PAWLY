@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { accountAccessError, resolveAccount } from "@/lib/account";
+import { firstEmbedded, type RowWithPrestataireProfil } from "@/lib/prestataire";
 
 // ── Geocode a French city via Nominatim (free, no key) ───────────────────────
 async function geocodeVille(
@@ -46,11 +48,14 @@ export async function GET() {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data)  return NextResponse.json({ error: "Profile not found." }, { status: 404 });
 
-  const profil = Array.isArray((data as any).prestataire_profil)
-    ? (data as any).prestataire_profil[0] ?? null
-    : (data as any).prestataire_profil ?? null;
+  // Suspended accounts are blocked from reading their own profile via the API.
+  const blocked = accountAccessError((data as { statut_compte: string | null }).statut_compte);
+  if (blocked) return NextResponse.json({ error: blocked.error }, { status: blocked.status });
 
-  return NextResponse.json({ profile: { ...(data as any), prestataire_profil: profil } });
+  const dataRow = data as RowWithPrestataireProfil;
+  const profil = firstEmbedded(dataRow.prestataire_profil);
+
+  return NextResponse.json({ profile: { ...dataRow, prestataire_profil: profil } });
 }
 
 // ── PUT /api/profile ──────────────────────────────────────────────────────────
@@ -90,6 +95,10 @@ export async function PUT(request: Request) {
   }
 
   const supabase = createServerSupabase();
+
+  // Block suspended accounts before any mutation (they may not edit their profile).
+  const account = await resolveAccount(supabase, userId);
+  if (!account.ok) return NextResponse.json({ error: account.error }, { status: account.status });
 
   // ── Build utilisateur patch ──────────────────────────────────────────────
   const patch: Record<string, unknown> = {};
@@ -171,12 +180,11 @@ export async function PUT(request: Request) {
     .eq("clerk_id", userId)
     .maybeSingle();
 
-  const profil = Array.isArray((full as any)?.prestataire_profil)
-    ? (full as any).prestataire_profil[0] ?? null
-    : (full as any)?.prestataire_profil ?? null;
+  const fullRow = (full ?? {}) as RowWithPrestataireProfil;
+  const profil = firstEmbedded(fullRow.prestataire_profil);
 
   return NextResponse.json({
     message: "Profil mis à jour.",
-    profile: { ...(full as any), prestataire_profil: profil },
+    profile: { ...fullRow, prestataire_profil: profil },
   });
 }

@@ -35,6 +35,7 @@ interface Props {
 export default function MapView({ markers, center = [46.6, 2.3], zoom = 5, onMarkerClick }: Props) {
   useEffect(() => { fixIcon(); }, []);
 
+  
   const validMarkers = markers.filter((m) => m.lat !== 0 || m.lng !== 0);
 
   // If we have markers with real coords, center on them

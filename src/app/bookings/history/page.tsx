@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { RedirectToSignIn, useAuth } from "@clerk/nextjs";
+import { ArrowLeft, History, Star } from "lucide-react";
 import { AuthNavbar } from "@/components/auth-navbar";
+import { AnimalIcon } from "@/components/icons";
 import { ReviewForm, StarsReadonly } from "@/components/review-form";
 
 interface Prestataire {
@@ -27,10 +29,6 @@ interface HistoryBooking {
   prestataire: Prestataire | Prestataire[];
   avis: { id: string; note: number; commentaire: string }[] | null;
 }
-
-const ANIMAL_EMOJI: Record<string, string> = {
-  chien: "🐕", chat: "🐱", lapin: "🐰", oiseau: "🐦", rongeur: "🐹", reptile: "🦎",
-};
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
@@ -75,8 +73,8 @@ function HistoryCard({ b, onReviewed }: { b: HistoryBooking; onReviewed: () => v
           )}
           <div>
             <p className="font-semibold text-zinc-800 dark:text-zinc-100">{sitter ? `${sitter.prenom} ${sitter.nom}` : "—"}</p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {ANIMAL_EMOJI[b.type_animal] ?? "🐾"} {b.nom_animal} · {formatDate(b.date_debut)} → {formatDate(b.date_fin)}
+            <p className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+              <AnimalIcon type={b.type_animal} className="h-3.5 w-3.5" /> {b.nom_animal} · {formatDate(b.date_debut)} → {formatDate(b.date_fin)}
             </p>
           </div>
         </div>
@@ -104,7 +102,9 @@ function HistoryCard({ b, onReviewed }: { b: HistoryBooking; onReviewed: () => v
             onClick={() => setShowReview((s) => !s)}
             className="mt-3 rounded-xl border border-amber-300 bg-amber-50 px-5 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-100 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30"
           >
-            ★ Noter ce séjour
+            <span className="flex items-center gap-1.5">
+              <Star className="h-4 w-4 fill-current" aria-hidden /> Noter ce séjour
+            </span>
           </button>
           {showReview && (
             <ReviewForm
@@ -163,7 +163,7 @@ export default function HistoryPage() {
             href="/bookings"
             className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-600 transition hover:border-teal-400 hover:text-teal-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-teal-500 dark:hover:text-teal-400"
           >
-            ← Réservations en cours
+            <ArrowLeft className="h-4 w-4" aria-hidden /> Réservations en cours
           </Link>
         </div>
 
@@ -181,7 +181,7 @@ export default function HistoryPage() {
 
         {!loading && !error && items.length === 0 && (
           <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <span className="text-5xl">🕑</span>
+            <History className="h-12 w-12 text-zinc-300 dark:text-zinc-600" aria-hidden />
             <p className="font-serif text-lg font-bold text-zinc-700 dark:text-zinc-300">Aucun historique pour le moment</p>
             <p className="max-w-xs text-sm text-zinc-400">Vos réservations terminées apparaîtront ici.</p>
           </div>

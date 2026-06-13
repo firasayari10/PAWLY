@@ -1,14 +1,13 @@
 "use client";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
-  // Render placeholder to avoid layout shift during SSR
-  if (!mounted) return <div className="h-9 w-9" aria-hidden />;
+  // `resolvedTheme` is undefined until next-themes has mounted and read the active
+  // theme on the client. Render a placeholder until then to avoid a hydration
+  // mismatch and layout shift during SSR.
+  if (!resolvedTheme) return <div className="h-9 w-9" aria-hidden />;
 
   const isDark = resolvedTheme === "dark";
 

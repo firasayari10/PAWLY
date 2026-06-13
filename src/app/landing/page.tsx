@@ -3,8 +3,24 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { RedirectToSignIn, useAuth, useUser } from "@clerk/nextjs";
+import {
+  CalendarDays,
+  Camera,
+  CircleCheck,
+  ClipboardList,
+  Handshake,
+  Lock,
+  MapPin,
+  PawPrint,
+  Search,
+  Shield,
+  Star,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 import { useSyncClerkUser } from "../profile/sync-user";
 import { AuthNavbar } from "@/components/auth-navbar";
+import { BrandPaw } from "@/components/icons";
 
 // ── Scroll reveal ──────────────────────────────────────────────────────────────
 function useReveal(threshold = 0.12) {
@@ -38,18 +54,18 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
 
 // ── Testimonials data ─────────────────────────────────────────────────────────
 const TESTIMONIALS = [
-  { name: "Sophie M.", city: "Paris 15e", pet: "🐕 Golden Retriever", avatar: "S", color: "from-sky-300 to-teal-400", rating: 5, text: "J'ai trouvé la gardienne parfaite en moins de 10 minutes. Les photos quotidiennes du e-journal m'ont permis de partir en vacances totalement sereine." },
-  { name: "Thomas L.", city: "Lyon 3e",  pet: "🐾 Prestataire certifié", avatar: "T", color: "from-violet-300 to-purple-400", rating: 5, text: "En tant que prestataire, Pawly m'a permis de développer mon activité et de rencontrer des familles formidables. Le système de paiement sécurisé est rassurant." },
-  { name: "Amélie R.", city: "Bordeaux", pet: "🐱 Abyssin", avatar: "A", color: "from-orange-300 to-rose-400", rating: 5, text: "Mon chat Mochi a été choyé pendant mes deux semaines. La gardienne lui a même appris des petits tours ! Le e-journal avec les photos m'a rendu heureuse chaque jour." },
-  { name: "Marc D.",   city: "Nantes",   pet: "🐕 Berger Australien", avatar: "M", color: "from-emerald-300 to-teal-400", rating: 5, text: "Application très intuitive, réservation en 3 minutes. Le suivi en temps réel et les messages rassurants du gardien ont fait toute la différence." },
+  { name: "Sophie M.", city: "Paris 15e", pet: "Golden Retriever", avatar: "S", color: "from-sky-300 to-teal-400", rating: 5, text: "J'ai trouvé la gardienne parfaite en moins de 10 minutes. Les photos quotidiennes du e-journal m'ont permis de partir en vacances totalement sereine." },
+  { name: "Thomas L.", city: "Lyon 3e",  pet: "Prestataire certifié", avatar: "T", color: "from-violet-300 to-purple-400", rating: 5, text: "En tant que prestataire, Pawly m'a permis de développer mon activité et de rencontrer des familles formidables. Le système de paiement sécurisé est rassurant." },
+  { name: "Amélie R.", city: "Bordeaux", pet: "Abyssin", avatar: "A", color: "from-orange-300 to-rose-400", rating: 5, text: "Mon chat Mochi a été choyé pendant mes deux semaines. La gardienne lui a même appris des petits tours ! Le e-journal avec les photos m'a rendu heureuse chaque jour." },
+  { name: "Marc D.",   city: "Nantes",   pet: "Berger Australien", avatar: "M", color: "from-emerald-300 to-teal-400", rating: 5, text: "Application très intuitive, réservation en 3 minutes. Le suivi en temps réel et les messages rassurants du gardien ont fait toute la différence." },
 ];
 
 // ── Quick action cards data ───────────────────────────────────────────────────
-const ACTIONS = [
-  { emoji: "🔍", label: "Trouver un gardien", sub: "Cherchez près de chez vous", href: "/search", color: "from-teal-500 to-teal-600", light: false },
-  { emoji: "📅", label: "Mes réservations",  sub: "Gérez vos réservations", href: "/bookings", color: "from-violet-500 to-purple-600", light: false },
-  { emoji: "👤", label: "Mon profil",         sub: "Modifiez vos informations", href: "/profile", color: "", light: true },
-  { emoji: "🐾", label: "Mes animaux",        sub: "Gérez vos compagnons", href: "/animals", color: "", light: true },
+const ACTIONS: { Icon: LucideIcon; label: string; sub: string; href: string; color: string; light: boolean }[] = [
+  { Icon: Search,       label: "Trouver un gardien", sub: "Cherchez près de chez vous", href: "/search", color: "from-teal-500 to-teal-600", light: false },
+  { Icon: CalendarDays, label: "Mes réservations",  sub: "Gérez vos réservations", href: "/bookings", color: "from-violet-500 to-purple-600", light: false },
+  { Icon: User,         label: "Mon profil",         sub: "Modifiez vos informations", href: "/profile", color: "", light: true },
+  { Icon: PawPrint,     label: "Mes animaux",        sub: "Gérez vos compagnons", href: "/animals", color: "", light: true },
 ];
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -178,7 +194,7 @@ export default function LandingPage() {
                     ? "border border-zinc-200/60 bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-teal-800 hover:border-teal-200"
                     : `bg-gradient-to-br ${a.color} text-white shadow-lg hover:shadow-teal-200/40 dark:hover:shadow-teal-900/40`
                 }`}>
-                  <span className="text-3xl">{a.emoji}</span>
+                  <a.Icon className={`h-8 w-8 ${a.light ? "text-teal-600 dark:text-teal-400" : "text-white"}`} aria-hidden />
                   <div>
                     <p className={`font-semibold text-sm ${a.light ? "text-zinc-800 dark:text-zinc-100" : "text-white"}`}>{a.label}</p>
                     <p className={`text-xs mt-0.5 ${a.light ? "text-zinc-500 dark:text-zinc-400" : "text-white/70"}`}>{a.sub}</p>
@@ -212,15 +228,15 @@ export default function LandingPage() {
             <h2 className="font-serif text-3xl font-black tracking-tight dark:text-zinc-50 lg:text-4xl">Simple comme bonjour</h2>
           </Reveal>
           <div className="grid gap-5 md:grid-cols-3">
-            {[
-              { num: "01", emoji: "🔍", title: "Cherchez près de chez vous", desc: "Entrez votre ville et vos dates. Notre algorithme propose les prestataires les mieux notés dans un rayon de 10 km." },
-              { num: "02", emoji: "📋", title: "Consultez les profils vérifiés", desc: "Avis, certifications, prix. Chaque prestataire est approuvé manuellement avant publication sur la plateforme." },
-              { num: "03", emoji: "🛡️", title: "Réservez l'esprit tranquille", desc: "Paiement sous séquestre, e-journal quotidien avec photos, suivi en temps réel. Votre animal entre de bonnes mains." },
-            ].map((step, i) => (
+            {([
+              { num: "01", Icon: Search,        title: "Cherchez près de chez vous", desc: "Entrez votre ville et vos dates. Notre algorithme propose les prestataires les mieux notés dans un rayon de 10 km." },
+              { num: "02", Icon: ClipboardList, title: "Consultez les profils vérifiés", desc: "Avis, certifications, prix. Chaque prestataire est approuvé manuellement avant publication sur la plateforme." },
+              { num: "03", Icon: Shield,        title: "Réservez l'esprit tranquille", desc: "Paiement sous séquestre, e-journal quotidien avec photos, suivi en temps réel. Votre animal entre de bonnes mains." },
+            ] as { num: string; Icon: LucideIcon; title: string; desc: string }[]).map((step, i) => (
               <Reveal key={step.num} delay={i * 100}>
                 <div className="group relative h-full rounded-2xl border border-zinc-200/60 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-teal-200 hover:shadow-xl dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-teal-800">
                   <div className="mb-1 font-serif text-5xl font-black text-zinc-100 transition group-hover:text-teal-50 dark:text-zinc-800 dark:group-hover:text-teal-950">{step.num}</div>
-                  <div className="mb-2 text-2xl">{step.emoji}</div>
+                  <step.Icon className="mb-2 h-6 w-6 text-teal-600 dark:text-teal-400" aria-hidden />
                   <h3 className="mb-2 font-serif text-lg font-bold text-zinc-800 dark:text-zinc-100">{step.title}</h3>
                   <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{step.desc}</p>
                 </div>
@@ -238,17 +254,19 @@ export default function LandingPage() {
             <h2 className="font-serif text-3xl font-black tracking-tight dark:text-zinc-50 lg:text-4xl">Tout ce dont vous avez besoin</h2>
           </Reveal>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { emoji: "📸", title: "E-Journal quotidien",      desc: "Photos, vidéos et messages chaque jour pour suivre votre animal à distance." },
-              { emoji: "✓",  title: "Prestataires vérifiés",   desc: "Identité, casier judiciaire, formation premiers secours. Tout est contrôlé." },
-              { emoji: "🔒", title: "Paiement sécurisé",       desc: "Votre argent est protégé jusqu'à la fin de la prestation. Remboursement garanti." },
-              { emoji: "📍", title: "Suivi en temps réel",     desc: "Localisez les promenades et suivez les activités de votre animal en direct." },
-              { emoji: "⭐", title: "Avis vérifiés",           desc: "Chaque avis est déposé par un vrai propriétaire après une garde confirmée." },
-              { emoji: "🤝", title: "Support 7j/7",            desc: "Notre équipe est disponible à tout moment pour vous accompagner." },
-            ].map((feat, i) => (
+            {([
+              { Icon: Camera,      title: "E-Journal quotidien",    desc: "Photos, vidéos et messages chaque jour pour suivre votre animal à distance." },
+              { Icon: CircleCheck, title: "Prestataires vérifiés",  desc: "Identité, casier judiciaire, formation premiers secours. Tout est contrôlé." },
+              { Icon: Lock,        title: "Paiement sécurisé",      desc: "Votre argent est protégé jusqu'à la fin de la prestation. Remboursement garanti." },
+              { Icon: MapPin,      title: "Suivi en temps réel",    desc: "Localisez les promenades et suivez les activités de votre animal en direct." },
+              { Icon: Star,        title: "Avis vérifiés",          desc: "Chaque avis est déposé par un vrai propriétaire après une garde confirmée." },
+              { Icon: Handshake,   title: "Support 7j/7",           desc: "Notre équipe est disponible à tout moment pour vous accompagner." },
+            ] as { Icon: LucideIcon; title: string; desc: string }[]).map((feat, i) => (
               <Reveal key={feat.title} delay={i * 60}>
                 <div className="group rounded-2xl border border-zinc-200/60 bg-amber-50 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-teal-200 hover:shadow-md dark:border-zinc-700/60 dark:bg-zinc-800 dark:hover:border-teal-800">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-xl shadow-sm dark:bg-zinc-700">{feat.emoji}</div>
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-teal-600 shadow-sm dark:bg-zinc-700 dark:text-teal-400">
+                    <feat.Icon className="h-5 w-5" aria-hidden />
+                  </div>
                   <h3 className="mb-1.5 font-serif text-base font-bold text-zinc-800 dark:text-zinc-100">{feat.title}</h3>
                   <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">{feat.desc}</p>
                 </div>
@@ -294,7 +312,9 @@ export default function LandingPage() {
         <div className="mx-auto max-w-5xl">
           <div className="mb-8 grid gap-8 md:grid-cols-4">
             <div>
-              <p className="mb-2 font-serif text-lg font-black text-teal-700 dark:text-teal-400">🐾 PAWLY</p>
+              <p className="mb-2 flex items-center gap-1.5 font-serif text-lg font-black text-teal-700 dark:text-teal-400">
+                <BrandPaw className="h-5 w-5" /> PAWLY
+              </p>
               <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">La plateforme de garde d&apos;animaux qui met la confiance au cœur de chaque réservation.</p>
             </div>
             {[
@@ -314,7 +334,9 @@ export default function LandingPage() {
           </div>
           <div className="flex flex-col gap-2 border-t border-zinc-200/60 pt-6 dark:border-zinc-800/60 md:flex-row md:justify-between">
             <p className="text-xs text-zinc-400">&copy; {new Date().getFullYear()} PAWLY. Tous droits réservés.</p>
-            <p className="text-xs text-zinc-400">Fait avec 🐾 en France</p>
+            <p className="flex items-center gap-1 text-xs text-zinc-400">
+              Fait avec <PawPrint className="h-3 w-3" aria-hidden /> en France
+            </p>
           </div>
         </div>
       </footer>

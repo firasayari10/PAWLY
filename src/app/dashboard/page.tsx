@@ -2,8 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { RedirectToSignIn, useAuth } from "@clerk/nextjs";
+import { Check, House, Inbox, Lock, MessageCircle, NotebookPen, Stethoscope, TriangleAlert, X } from "lucide-react";
 import { AuthNavbar } from "@/components/auth-navbar";
+import { AnimalIcon } from "@/components/icons";
+import { ChatBox } from "@/components/chat-box";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -43,11 +47,6 @@ interface Offre {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-const ANIMAL_EMOJI: Record<string, string> = {
-  chien: "🐕", chat: "🐱", lapin: "🐰",
-  oiseau: "🐦", rongeur: "🐹", reptile: "🦎",
-};
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
@@ -115,6 +114,26 @@ function OffreCard({
   const owner   = getOwner(offre);
   const jours   = nbJours(offre.date_debut, offre.date_fin);
   const initials = owner ? `${owner.prenom?.[0] ?? ""}${owner.nom?.[0] ?? ""}`.toUpperCase() : "?";
+  const router  = useRouter();
+  const [openingJournal, setOpeningJournal] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+
+  async function openJournal() {
+    setOpeningJournal(true);
+    try {
+      const res = await fetch("/api/journal/from-offer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ offre_id: offre.id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.journal?.id) {
+        router.push(`/journal/${data.journal.id}?offre=${offre.id}`);
+      }
+    } finally {
+      setOpeningJournal(false);
+    }
+  }
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700/60 dark:bg-zinc-800">
@@ -145,7 +164,7 @@ function OffreCard({
           <StatutBadge statut={offre.statut} />
           {offre.statut === "accepte" && offre.statut_paiement === "paye" && (
             <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-[11px] font-semibold text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/30 dark:text-teal-400">
-              🔒 Payée
+              <Lock className="h-3 w-3" aria-hidden /> Payée
             </span>
           )}
           {offre.statut === "accepte" && (offre.statut_paiement ?? "non_paye") === "non_paye" && (
@@ -160,8 +179,8 @@ function OffreCard({
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-700/40">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">Animal</p>
-          <p className="mt-0.5 font-semibold text-zinc-800 dark:text-zinc-100">
-            {ANIMAL_EMOJI[offre.type_animal] ?? "🐾"} {offre.nom_animal}
+          <p className="mt-0.5 flex items-center gap-1.5 font-semibold text-zinc-800 dark:text-zinc-100">
+            <AnimalIcon type={offre.type_animal} className="h-4 w-4 text-teal-600 dark:text-teal-400" /> {offre.nom_animal}
           </p>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">{offre.nb_animaux} animal(aux)</p>
         </div>
@@ -194,7 +213,7 @@ function OffreCard({
         (offre.veterinaire.nom_veterinaire || offre.veterinaire.nom_clinique || offre.veterinaire.telephone) && (
         <div className="mt-3 rounded-xl border border-teal-100 bg-teal-50/60 p-4 dark:border-teal-800/40 dark:bg-teal-900/15">
           <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-400">
-            🏥 Vétérinaire de l&apos;animal
+            <Stethoscope className="h-4 w-4" aria-hidden /> Vétérinaire de l&apos;animal
           </p>
           <div className="grid gap-x-4 gap-y-1 text-sm text-zinc-700 dark:text-zinc-300 sm:grid-cols-2">
             {offre.veterinaire.nom_veterinaire && <p><span className="text-zinc-400">Praticien : </span>{offre.veterinaire.nom_veterinaire}</p>}
@@ -207,6 +226,44 @@ function OffreCard({
         </div>
       )}
 
+      {/* Journal — share daily updates with the owner once the garde is accepted */}
+      {offre.statut === "accepte" && (
+        <button
+          onClick={openJournal}
+          disabled={openingJournal}
+          className="mt-4 w-full rounded-xl border border-teal-200 bg-teal-50/60 py-2.5 text-sm font-semibold text-teal-700 transition hover:bg-teal-100 disabled:opacity-50 dark:border-teal-800/40 dark:bg-teal-900/15 dark:text-teal-400"
+        >
+          {openingJournal ? (
+            "…"
+          ) : (
+            <span className="flex items-center justify-center gap-1.5">
+              <NotebookPen className="h-4 w-4" aria-hidden /> Journal de {offre.nom_animal}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* Chat — end-to-end-encrypted, available once the garde is accepted */}
+      {offre.statut === "accepte" && (
+        <button
+          onClick={() => setShowChat((s) => !s)}
+          className="mt-3 w-full rounded-xl border border-teal-300 bg-teal-50 py-2.5 text-sm font-semibold text-teal-700 transition hover:bg-teal-100 dark:border-teal-700/50 dark:bg-teal-900/20 dark:text-teal-400 dark:hover:bg-teal-900/30"
+        >
+          <span className="flex items-center justify-center gap-1.5">
+            <MessageCircle className="h-4 w-4" aria-hidden />
+            {showChat ? "Masquer la discussion" : `Discuter avec ${owner?.prenom ?? "le propriétaire"}`}
+          </span>
+        </button>
+      )}
+
+      {showChat && offre.statut === "accepte" && (
+        <ChatBox
+          offreId={offre.id}
+          peerName={owner ? `${owner.prenom} ${owner.nom}` : undefined}
+          onClose={() => setShowChat(false)}
+        />
+      )}
+
       {/* Actions — only for pending */}
       {offre.statut === "en_attente" && (
         <div className="mt-4 flex gap-3">
@@ -215,14 +272,26 @@ function OffreCard({
             disabled={processing}
             className="flex-1 rounded-xl bg-teal-600 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 disabled:opacity-50 dark:bg-teal-500 dark:hover:bg-teal-600"
           >
-            {processing ? "…" : "✓ Accepter"}
+            {processing ? (
+              "…"
+            ) : (
+              <span className="flex items-center justify-center gap-1.5">
+                <Check className="h-4 w-4" aria-hidden /> Accepter
+              </span>
+            )}
           </button>
           <button
             onClick={() => onAction(offre.id, "refuser")}
             disabled={processing}
             className="flex-1 rounded-xl border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
           >
-            {processing ? "…" : "✕ Refuser"}
+            {processing ? (
+              "…"
+            ) : (
+              <span className="flex items-center justify-center gap-1.5">
+                <X className="h-4 w-4" aria-hidden /> Refuser
+              </span>
+            )}
           </button>
         </div>
       )}
@@ -328,16 +397,18 @@ export default function DashboardPage() {
               ? "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-400"
               : "border-red-200 bg-red-50 text-red-600 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-400"
             }`}>
-            <span>{toast.ok ? "✓" : "⚠"}</span>
+            {toast.ok ? <Check className="h-4 w-4 shrink-0" aria-hidden /> : <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden />}
             <span>{toast.msg}</span>
-            <button onClick={() => setToast(null)} className="ml-auto text-current opacity-60 hover:opacity-100">×</button>
+            <button onClick={() => setToast(null)} aria-label="Fermer" className="ml-auto text-current opacity-60 hover:opacity-100">
+              <X className="h-3.5 w-3.5" aria-hidden />
+            </button>
           </div>
         )}
 
         {/* Not a prestataire */}
         {error?.includes("prestataire") && (
           <div className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-200 bg-white py-16 text-center dark:border-zinc-700/60 dark:bg-zinc-800">
-            <span className="text-5xl">🏠</span>
+            <House className="h-12 w-12 text-zinc-300 dark:text-zinc-600" aria-hidden />
             <p className="font-serif text-xl font-bold text-zinc-700 dark:text-zinc-200">
               Accès réservé aux prestataires
             </p>
@@ -408,7 +479,7 @@ export default function DashboardPage() {
             {/* Empty */}
             {!loading && filtered.length === 0 && (
               <div className="flex flex-col items-center gap-3 py-20 text-center">
-                <span className="text-5xl">📭</span>
+                <Inbox className="h-12 w-12 text-zinc-300 dark:text-zinc-600" aria-hidden />
                 <p className="font-serif text-lg font-bold text-zinc-700 dark:text-zinc-300">
                   {filter === "all" ? "Aucune demande reçue" : "Aucune demande dans cette catégorie"}
                 </p>
