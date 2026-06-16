@@ -4,7 +4,6 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import { accountAccessError, resolveAccount } from "@/lib/account";
 import { firstEmbedded, type RowWithPrestataireProfil } from "@/lib/prestataire";
 
-// ── Geocode a French city via Nominatim (free, no key) ───────────────────────
 async function geocodeVille(
   ville: string,
   codePostal?: string,
@@ -19,12 +18,11 @@ async function geocodeVille(
     const data: Array<{ lat: string; lon: string }> = await res.json();
     if (data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
   } catch {
-    /* non-critical — silently skip */
+    /* non-critical */
   }
   return null;
 }
 
-// ── GET /api/profile ──────────────────────────────────────────────────────────
 export async function GET() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,7 +46,6 @@ export async function GET() {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data)  return NextResponse.json({ error: "Profile not found." }, { status: 404 });
 
-  // Suspended accounts are blocked from reading their own profile via the API.
   const blocked = accountAccessError((data as { statut_compte: string | null }).statut_compte);
   if (blocked) return NextResponse.json({ error: blocked.error }, { status: blocked.status });
 
@@ -58,25 +55,15 @@ export async function GET() {
   return NextResponse.json({ profile: { ...dataRow, prestataire_profil: profil } });
 }
 
-// ── PUT /api/profile ──────────────────────────────────────────────────────────
 export async function PUT(request: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: {
-    prenom?: string;
-    nom?: string;
-    telephone?: string;
-    adresse?: string;
-    code_postal?: string;
-    ville?: string;
-    role?: string;
-    // Prestataire-specific
-    bio?: string;
-    tarif_jour?: number;
-    types_animaux?: string[];
-    rayon_km?: number;
-    annees_experience?: number;
+    prenom?: string; nom?: string; telephone?: string;
+    adresse?: string; code_postal?: string; ville?: string; role?: string;
+    bio?: string; tarif_jour?: number; types_animaux?: string[];
+    rayon_km?: number; annees_experience?: number;
   };
 
   try {
@@ -85,10 +72,8 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const {
-    prenom, nom, telephone, adresse, code_postal, ville, role,
-    bio, tarif_jour, types_animaux, rayon_km, annees_experience,
-  } = body;
+  const { prenom, nom, telephone, adresse, code_postal, ville, role,
+    bio, tarif_jour, types_animaux, rayon_km, annees_experience } = body;
 
   if (role !== undefined && !["proprietaire", "prestataire"].includes(role)) {
     return NextResponse.json({ error: "Rôle invalide." }, { status: 400 });
@@ -96,21 +81,18 @@ export async function PUT(request: Request) {
 
   const supabase = createServerSupabase();
 
-  // Block suspended accounts before any mutation (they may not edit their profile).
   const account = await resolveAccount(supabase, userId);
   if (!account.ok) return NextResponse.json({ error: account.error }, { status: account.status });
 
-  // ── Build utilisateur patch ──────────────────────────────────────────────
   const patch: Record<string, unknown> = {};
   if (prenom      !== undefined) patch.prenom      = prenom.trim();
   if (nom         !== undefined) patch.nom         = nom.trim();
-  if (telephone   !== undefined) patch.telephone   = telephone.trim() || null; // NULL for empty
+  if (telephone   !== undefined) patch.telephone   = telephone.trim() || null;
   if (adresse     !== undefined) patch.adresse     = adresse.trim();
   if (code_postal !== undefined) patch.code_postal = code_postal.trim();
   if (ville       !== undefined) patch.ville       = ville.trim();
   if (role        !== undefined) patch.role        = role;
 
-  // ── Geocode when ville changes ───────────────────────────────────────────
   if (ville?.trim()) {
     const coords = await geocodeVille(ville.trim(), code_postal?.trim());
     if (coords) {
@@ -136,36 +118,31 @@ export async function PUT(request: Request) {
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
-  // ── Sync prestataire_profil ──────────────────────────────────────────────
   const effectiveRole = role ?? updated.role;
 
   if (effectiveRole === "prestataire") {
     const profPatch: Record<string, unknown> = {
-      utilisateur_id:    updated.id_user,
-      disponible:        true,
+      utilisateur_id: updated.id_user,
+      disponible: true,
     };
-    if (bio                !== undefined) profPatch.bio                = bio;
-    if (tarif_jour         !== undefined) profPatch.tarif_jour         = tarif_jour;
-    if (types_animaux      !== undefined) profPatch.types_animaux      = types_animaux;
-    if (rayon_km           !== undefined) profPatch.rayon_km           = rayon_km;
-    if (annees_experience  !== undefined) profPatch.annees_experience  = annees_experience;
+    if (bio               !== undefined) profPatch.bio               = bio;
+    if (tarif_jour        !== undefined) profPatch.tarif_jour        = tarif_jour;
+    if (types_animaux     !== undefined) profPatch.types_animaux     = types_animaux;
+    if (rayon_km          !== undefined) profPatch.rayon_km          = rayon_km;
+    if (annees_experience !== undefined) profPatch.annees_experience = annees_experience;
 
     const { error: profError } = await supabase
       .from("prestataire_profil")
       .upsert(profPatch, { onConflict: "utilisateur_id" });
 
-    if (profError) {
-      console.error("[PROFILE PUT] prestataire_profil upsert error:", profError.message);
-    }
+    if (profError) console.error("[PROFILE PUT] prestataire_profil upsert error:", profError.message);
   } else if (effectiveRole === "proprietaire") {
-    // Mark as unavailable when switching back to proprietaire
     await supabase
       .from("prestataire_profil")
       .update({ disponible: false })
       .eq("utilisateur_id", updated.id_user);
   }
 
-  // ── Return updated profile with profil joined ────────────────────────────
   const { data: full } = await supabase
     .from("utilisateur")
     .select(`
