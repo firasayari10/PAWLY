@@ -255,7 +255,8 @@ function PaymentVisual() {
         </div>
         <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/40 p-3 mb-4 text-center">
           <p className="flex items-center justify-center gap-1 text-[10px] text-amber-700 dark:text-amber-400">
-            <Lock className="h-3 w-3 shrink-0" aria-hidden /> Paiement conservé sous séquestre jusqu&apos;à la fin de la garde
+            <Lock className="h-3 w-3 shrink-0" aria-hidden />
+            <span>Paiement conservé sous séquestre jusqu&apos;à la fin de la garde</span>
           </p>
         </div>
         <button className="w-full rounded-xl bg-teal-600 py-2.5 text-xs font-semibold text-white hover:bg-teal-700 transition">

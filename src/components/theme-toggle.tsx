@@ -1,13 +1,34 @@
 "use client";
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
+
+const noopSubscribe = () => () => {};
+
+/**
+ * `false` during SSR and the first client render (hydration), then `true`.
+ * useSyncExternalStore uses the server snapshot for hydration, so the first
+ * client render always matches the server — no setState-in-effect, no
+ * cascading-render lint warning, and no hydration mismatch.
+ */
+function useHydrated() {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+}
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
+  const hydrated = useHydrated();
 
-  // `resolvedTheme` is undefined until next-themes has mounted and read the active
-  // theme on the client. Render a placeholder until then to avoid a hydration
-  // mismatch and layout shift during SSR.
-  if (!resolvedTheme) return <div className="h-9 w-9" aria-hidden />;
+  // The server always renders the placeholder (no theme is known during SSR).
+  // next-themes' pre-hydration script resolves the theme *synchronously*, so by
+  // the first client render `resolvedTheme` is already set — gating on it would
+  // make the client render the button while the server rendered the div, a
+  // hydration mismatch. Gating on `hydrated` guarantees the first client render
+  // matches the server (both the placeholder), then swaps to the real toggle.
+  if (!hydrated) return <div className="h-9 w-9" aria-hidden />;
 
   const isDark = resolvedTheme === "dark";
 

@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Explicit content sources. A nested git repo in the parent folder
+   (EPF/PAWLY/.git) misleads Tailwind v4's automatic content detection under
+   Turbopack dev, so no utility classes get generated and the dev pages render
+   unstyled. Declaring the sources here makes detection independent of git-root
+   inference. Resolves relative to this file → scans all of src/. */
+@source "../**/*.{ts,tsx}";
+
 /* ── Class-based dark mode (next-themes adds .dark to <html>) ─────────────── */
 @custom-variant dark (&:where(.dark, .dark *));
 

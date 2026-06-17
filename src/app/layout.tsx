@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, DM_Sans } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, SignedIn } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AssistantWidget } from "@/components/assistant-widget";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -35,6 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <body className="min-h-full antialiased">
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             {children}
+            <SignedIn>
+              <AssistantWidget />
+            </SignedIn>
           </ThemeProvider>
         </body>
       </html>

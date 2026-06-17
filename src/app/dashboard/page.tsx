@@ -213,7 +213,8 @@ function OffreCard({
         (offre.veterinaire.nom_veterinaire || offre.veterinaire.nom_clinique || offre.veterinaire.telephone) && (
         <div className="mt-3 rounded-xl border border-teal-100 bg-teal-50/60 p-4 dark:border-teal-800/40 dark:bg-teal-900/15">
           <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-400">
-            <Stethoscope className="h-4 w-4" aria-hidden /> Vétérinaire de l&apos;animal
+            <Stethoscope className="h-4 w-4" aria-hidden />
+            <span>Vétérinaire de l&apos;animal</span>
           </p>
           <div className="grid gap-x-4 gap-y-1 text-sm text-zinc-700 dark:text-zinc-300 sm:grid-cols-2">
             {offre.veterinaire.nom_veterinaire && <p><span className="text-zinc-400">Praticien : </span>{offre.veterinaire.nom_veterinaire}</p>}

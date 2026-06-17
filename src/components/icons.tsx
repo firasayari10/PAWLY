@@ -14,6 +14,7 @@ import {
   Rat,
   Turtle,
   PawPrint,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -47,11 +48,36 @@ export function AnimalIcon({
   });
 }
 
-/** Brand mark: the PAWLY paw print, teal by default. */
+/**
+ * Brand mark: the PAWLY paw print with an AI sparkle accent.
+ * The paw keeps the teal brand colour (driven by `className`); a small amber
+ * sparkle sits at the top-right to signal the AI assistant. The wrapper inherits
+ * the same sizing classes so every existing call site is unaffected.
+ */
 export function BrandPaw({
   className = "h-5 w-5 text-teal-600 dark:text-teal-400",
 }: {
   className?: string;
 }) {
-  return <PawPrint className={`inline-block shrink-0 ${className}`} aria-hidden />;
+  return (
+    <span className={`relative inline-flex shrink-0 ${className}`} aria-hidden>
+      <PawPrint className="h-full w-full" />
+      <Sparkles
+        className="absolute -right-1 -top-1 h-1/2 w-1/2 text-amber-400 drop-shadow-sm dark:text-amber-300"
+        strokeWidth={2.5}
+      />
+    </span>
+  );
+}
+
+/**
+ * Standalone AI sparkle, reused by the assistant launcher button for visual
+ * consistency with the brand mark. Colour/size via `className`.
+ */
+export function AssistantSparkle({
+  className = "h-5 w-5",
+}: {
+  className?: string;
+}) {
+  return <Sparkles className={`inline-block shrink-0 ${className}`} aria-hidden />;
 }

@@ -5,6 +5,7 @@ import { useUser, RedirectToSignIn } from "@clerk/nextjs";
 import { useAuth } from "@clerk/nextjs";
 import { Check, House, PawPrint, TriangleAlert } from "lucide-react";
 import { useSyncClerkUser } from "./sync-user";
+import { OcrUpload, type OcrFields } from "@/components/ocr-upload";
 import { AuthNavbar } from "@/components/auth-navbar";
 import { AnimalIcon } from "@/components/icons";
 
@@ -259,7 +260,27 @@ export default function ProfilePage() {
         ) : (
           <form onSubmit={handleSave} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700/60 dark:bg-zinc-800">
 
-            {/* Identity */}
+            {/* ── OCR carte d'identité ── */}
+            <h2 className="mb-3 font-serif text-lg font-bold text-zinc-800 dark:text-zinc-100">
+              Vérification d&apos;identité
+            </h2>
+            <div className="mb-6">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                Carte d&apos;identité — remplissage automatique
+              </p>
+              <OcrUpload
+                type="identite"
+                onExtracted={(fields: OcrFields) => {
+                  if (fields.prenom)      setPrenom(fields.prenom);
+                  if (fields.nom)         setNom(fields.nom);
+                  if (fields.adresse)     setAdresse(fields.adresse);
+                  if (fields.code_postal) setCodePostal(fields.code_postal);
+                  if (fields.ville)       setVille(fields.ville);
+                }}
+              />
+            </div>
+
+            {/* Identity fields */}
             <h2 className="mb-4 font-serif text-lg font-bold text-zinc-800 dark:text-zinc-100">
               Informations personnelles
             </h2>
@@ -275,8 +296,25 @@ export default function ProfilePage() {
               <Field label="Téléphone" name="telephone" value={telephone} onChange={setTelephone} type="tel" />
             </div>
 
-            {/* Address */}
-            <h2 className="mb-4 font-serif text-lg font-bold text-zinc-800 dark:text-zinc-100">Adresse</h2>
+            {/* ── OCR attestation d'assurance ── */}
+            <h2 className="mb-3 font-serif text-lg font-bold text-zinc-800 dark:text-zinc-100">
+              Adresse
+            </h2>
+            <div className="mb-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                Attestation d&apos;assurance — remplissage automatique
+              </p>
+              <OcrUpload
+                type="assurance"
+                onExtracted={(fields: OcrFields) => {
+                  if (fields.adresse)     setAdresse(fields.adresse);
+                  if (fields.code_postal) setCodePostal(fields.code_postal);
+                  if (fields.ville)       setVille(fields.ville);
+                }}
+              />
+            </div>
+
+            {/* Address fields */}
             <div className="mb-6 grid gap-4">
               <Field label="Adresse"     name="adresse"     value={adresse}    onChange={setAdresse} />
               <div className="grid gap-4 sm:grid-cols-2">

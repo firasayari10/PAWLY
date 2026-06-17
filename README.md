@@ -312,3 +312,35 @@ pawly/
 4. Mettez à jour les **URLs autorisées** dans Clerk et le **Third-Party Auth** Supabase avec
    le domaine de production.
 5. Documentation de référence : <https://nextjs.org/docs/app/building-your-application/deploying>.
+
+---
+
+## 17. Assistant IA + hébergement Azure (RAG)
+
+Pawly intègre un **assistant IA** (bouton ✨ en bas à droite, visible une fois connecté)
+qui répond aux questions sur la garde d'animaux à partir d'une **base de connaissances**
+(RAG) et peut consulter **vos propres données** (réservations, journaux, vétérinaires
+proches) via du *function calling*.
+
+**Briques 100 % Azure :**
+
+| Brique | Service | Variables (`.env.local`) |
+|---|---|---|
+| LLM + embeddings | **Azure OpenAI** | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_CHAT_DEPLOYMENT`, `AZURE_OPENAI_EMBEDDING_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION` |
+| RAG (vecteurs) | **Azure AI Search** | `AZURE_SEARCH_ENDPOINT`, `AZURE_SEARCH_API_KEY`, `AZURE_SEARCH_INDEX_NAME` |
+| Hébergement | **Azure Container Apps** (+ ACR) | — (image conteneurisée) |
+
+**Mise en route :** suivez le guide pas-à-pas **[`docs/azure-setup.md`](docs/azure-setup.md)**
+(création des ressources Azure, ingestion de la base, build de l'image, déploiement).
+
+**Base de connaissances :** fichiers Markdown dans `data/knowledge-base/` (frontmatter
+`title/category/source/lang`). Après modification, ré-indexez avec :
+
+```bash
+bun run ingest:kb
+```
+
+**Code clé :** `src/lib/ai/*` (client Azure OpenAI, recherche AI Search, chunking, prompt
+RAG, outils), la route `src/app/api/assistant/route.ts` (streaming SSE + outils) et le
+composant `src/components/assistant-widget.tsx`. ⚠️ L'assistant **ne remplace pas un·e
+vétérinaire** (garde-fou intégré au prompt système).

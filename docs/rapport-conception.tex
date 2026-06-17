@@ -1,0 +1,843 @@
+% ============================================================
+%  PAWLY : Rapport de conception
+%  Compilation : pdflatex rapport-conception.tex (deux passes pour le sommaire)
+%  Tous les paquets utilises appartiennent a une distribution TeX Live standard.
+%  Document monochrome (noir et nuances de gris).
+% ============================================================
+\documentclass[11pt,a4paper]{article}
+
+% --- Encodage et langue ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Mise en page minimaliste ---
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{fancyvrb}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc,shapes.geometric,babel}
+
+% Reduit les espaces inter-mots excessifs dans le texte justifie.
+\setlength{\emergencystretch}{1.5em}
+
+% --- Nuances de gris (aucune couleur) ---
+\definecolor{ink}{gray}{0.00}
+\definecolor{inkgray}{gray}{0.45}
+\definecolor{inklight}{gray}{0.88}
+\definecolor{inkbg}{gray}{0.94}
+
+% --- Styles communs aux diagrammes (monochrome) ---
+\tikzset{
+  entity/.style={draw=ink,rounded corners=2pt,fill=white,align=center,
+    inner sep=4pt,font=\footnotesize,minimum height=0.7cm},
+  hubentity/.style={entity,fill=inklight,very thick},
+  fk/.style={-{Latex[length=2mm]},inkgray,thin},
+  spine/.style={-{Latex[length=2mm]},ink,thick},
+  usecase/.style={draw=ink,fill=inkbg,ellipse,align=center,
+    inner sep=2pt,font=\footnotesize,minimum width=2.6cm,minimum height=0.85cm},
+  proc/.style={draw=ink,rounded corners=2pt,fill=white,align=center,
+    inner sep=3pt,font=\scriptsize,text width=2.7cm,minimum height=1.05cm},
+  store/.style={proc,fill=inklight,text width=3cm},
+  flow/.style={-{Latex[length=2mm]},ink},
+  % Pictogramme d'acteur UML (figure batonnet)
+  actorpic/.pic={
+    \draw[thick] (0,0) circle (3.2pt);
+    \draw[thick] (0,-3.2pt) -- (0,-15pt);
+    \draw[thick] (-6pt,-8pt) -- (6pt,-8pt);
+    \draw[thick] (0,-15pt) -- (-5pt,-25pt);
+    \draw[thick] (0,-15pt) -- (5pt,-25pt);
+  }
+}
+
+% --- Pied de page minimal ---
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0.2pt}
+\fancyfoot[L]{\small\color{inkgray}PAWLY : Rapport de conception}
+\fancyfoot[R]{\small\color{inkgray}\thepage}
+
+% --- Liens cliquables, sans couleur (hidelinks) ---
+\usepackage[hidelinks,linktoc=all]{hyperref}
+
+% --- Sommaire nomme << Sommaire >> ---
+\renewcommand{\contentsname}{Sommaire}
+
+% --- Bloc de code monospace, sobre ---
+\fvset{frame=single,framesep=4pt,fontsize=\small,rulecolor=\color{inkgray}}
+
+% ============================================================
+\begin{document}
+
+% --- Page de garde ---
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+{\Huge\bfseries PAWLY\par}
+\vspace{0.4cm}
+{\large La garde d'animaux, repensee.\par}
+\vspace{2.5cm}
+\rule{0.6\linewidth}{0.8pt}\par
+\vspace{0.8cm}
+{\LARGE\bfseries Rapport de conception\par}
+\vspace{0.4cm}
+{\large Analyse des besoins, modelisation et architecture technique\par}
+\vspace{2.5cm}
+\rule{0.6\linewidth}{0.8pt}\par
+\vfill
+{\large Firas Ayari\par}
+\vspace{0.2cm}
+{\color{inkgray}EPF Engineering School\par}
+\vspace{0.2cm}
+{\color{inkgray}\today\par}
+\end{titlepage}
+
+% --- Sommaire ---
+\tableofcontents
+\thispagestyle{fancy}
+\clearpage
+
+% ============================================================
+\section{Introduction}
+% ============================================================
+
+\subsection{Contexte}
+PAWLY est une plateforme web qui met en relation des proprietaires d'animaux
+domestiques avec des prestataires de garde verifies, a proximite geographique.
+Le service couvre le cycle complet d'une garde : decouverte d'un prestataire,
+reservation, paiement securise, messagerie privee, suivi en temps reel via un
+journal de garde, puis evaluation. La plateforme integre egalement un assistant
+conversationnel fonde sur l'intelligence artificielle ainsi qu'une saisie
+assistee des documents d'identite par reconnaissance optique de caracteres.
+
+\subsection{Probleme adresse}
+La garde informelle souffre d'un deficit de confiance : difficulte a verifier le
+serieux d'un prestataire, absence de tracabilite pendant la prestation,
+paiements non securises et litiges sans recours. PAWLY repond a ces limites par
+la verification des comptes, la geolocalisation, le paiement intermedie, la
+journalisation horodatee de la garde et un dispositif de signalement.
+
+\subsection{Objectifs}
+\begin{itemize}[leftmargin=1.4em]
+  \item Offrir un parcours fluide de la recherche d'un prestataire jusqu'au paiement.
+  \item Garantir la confiance : verification d'identite, avis, moderation, signalements.
+  \item Assurer la confidentialite des donnees personnelles et des echanges.
+  \item Reduire la friction de saisie grace a l'intelligence artificielle (OCR, assistant).
+  \item Conserver une architecture simple, testable et deployable de bout en bout sur Azure.
+\end{itemize}
+
+\subsection{Perimetre du document}
+Ce rapport presente l'integralite du projet : l'analyse des besoins
+fonctionnels et non fonctionnels, la modelisation des donnees (avec les
+diagrammes generes a partir du schema), puis l'architecture technique detaillee
+(frontend, backend, services Azure, integrations tierces, securite et
+deploiement).
+
+\subsection{Glossaire}
+\begin{description}[leftmargin=2em,style=nextline]
+  \item[Proprietaire] Utilisateur qui possede un animal et cherche une garde.
+  \item[Prestataire] Utilisateur qui propose un service de garde remunere.
+  \item[Offre de garde] Reservation reliant un proprietaire et un prestataire.
+  \item[RAG] Generation augmentee par la recherche (Retrieval Augmented Generation).
+  \item[OCR] Reconnaissance optique de caracteres.
+  \item[RLS] Securite au niveau des lignes (Row Level Security) de PostgreSQL.
+\end{description}
+
+% ============================================================
+\section{Analyse des besoins}
+% ============================================================
+
+\subsection{Acteurs}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Acteur} & \textbf{Role} \\
+\midrule
+Proprietaire & Cree son profil, recherche un prestataire, reserve, paie, dialogue, suit la garde, depose un avis. \\
+Prestataire & Renseigne un profil de garde (tarif, rayon, animaux acceptes), accepte des offres, alimente le journal. \\
+Administrateur & Modere les comptes, traite les signalements, supervise les avis et les utilisateurs. \\
+Systeme / IA & Assistant conversationnel et extraction documentaire automatisee. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Besoins fonctionnels}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Module} & \textbf{Besoins fonctionnels} \\
+\midrule
+Comptes et profil & Inscription et authentification, edition du profil, geocodage de l'adresse, verification d'identite, bascule proprietaire / prestataire. \\
+Recherche & Recherche de prestataires par ville et par rayon, affichage sur carte interactive, filtres par type d'animal et tarif. \\
+Offres et reservations & Creation d'une offre, acceptation, annulation, historique des reservations. \\
+Messagerie & Conversation privee par offre, pieces jointes, chiffrement de bout en bout. \\
+Journal de garde & Entrees horodatees, photos, exploration publique d'extraits, generation depuis une offre. \\
+Avis & Notation et commentaire apres une garde, moderation. \\
+Paiements & Paiement Stripe (session de paiement, confirmation, reception des evenements par webhook). \\
+Signalements et administration & Depot d'un signalement, traitement par l'administration, gestion des comptes et des avis. \\
+Assistant IA & Reponses fondees sur une base de connaissances et sur les donnees reelles de l'utilisateur. \\
+OCR du profil & Pre-remplissage des champs depuis une carte d'identite et une attestation d'assurance. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Besoins non fonctionnels}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Exigence} & \textbf{Description} \\
+\midrule
+Securite & Authentification deleguee, autorisation cote serveur, secrets hors du code, requetes parametrees. \\
+Confidentialite & Conformite au RGPD, donnees d'identite traitees cote serveur, aucune journalisation de donnees personnelles. \\
+Performance & Rendu serveur, recherche vectorielle indexee, reponses de l'assistant en flux continu. \\
+Accessibilite & HTML semantique, libelles, navigation clavier, contrastes et mode sombre. \\
+Scalabilite & Services sans etat, mise a l'echelle horizontale, mise a l'echelle a zero a l'inactivite. \\
+Observabilite & Journaux structures cote serveur, absence de donnees sensibles dans les traces. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Diagramme de cas d'utilisation}
+Le diagramme ci-dessous synthetise les principales interactions entre les
+acteurs et le systeme.
+
+\begin{center}
+\resizebox{0.96\linewidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize]
+  % Frontiere du systeme
+  \node[draw=inkgray,rounded corners,minimum width=8.6cm,minimum height=9.4cm,
+        label={[inkgray]above:\textbf{PAWLY}}] (sys) at (5.5,1.6) {};
+
+  % Cas d'utilisation
+  \node[usecase] (u9) at (5.5,5.9) {Consulter\\ l'assistant IA};
+  \node[usecase] (u1) at (5.5,4.6) {Gerer son profil\\ (OCR)};
+  \node[usecase] (u2) at (5.5,3.4) {Rechercher un\\ prestataire};
+  \node[usecase] (u3) at (5.5,2.2) {Reserver et payer};
+  \node[usecase] (u4) at (5.5,1.0) {Echanger par\\ messagerie};
+  \node[usecase] (u5) at (5.5,-0.2) {Suivre le journal\\ de garde};
+  \node[usecase] (u6) at (5.5,-1.4) {Deposer un avis};
+  \node[usecase] (u7) at (3.6,-2.7) {Signaler un abus};
+  \node[usecase] (u8) at (7.6,-2.7) {Moderer les\\ comptes};
+
+  % Acteurs
+  \node (prop) at (-1.4,4) {}; \pic at (prop) {actorpic};
+  \node[below=20pt of prop,align=center] {Proprietaire};
+  \node (prest) at (12.4,4) {}; \pic at (prest) {actorpic};
+  \node[below=20pt of prest,align=center] {Prestataire};
+  \node (admin) at (5.5,-4.6) {}; \pic at (admin) {actorpic};
+  \node[below=20pt of admin,align=center] {Administrateur};
+
+  % Liens
+  \foreach \u in {u1,u2,u3,u4,u5,u6,u7,u9} \draw[inkgray] (prop) -- (\u);
+  \foreach \u in {u1,u3,u4,u5,u6,u7,u9} \draw[inkgray] (prest) -- (\u);
+  \foreach \u in {u7,u8} \draw[inkgray] (admin) -- (\u);
+\end{tikzpicture}}
+\end{center}
+
+% ============================================================
+\section{Conception et modelisation}
+% ============================================================
+
+\subsection{Vue d'ensemble du modele de donnees}
+La base PostgreSQL (hebergee par Supabase) place l'entite \texttt{utilisateur} au
+centre : la quasi-totalite des tables s'y rattachent, directement ou par
+transitivite. Le schema comporte deux familles qui coexistent :
+\begin{enumerate}[leftmargin=1.6em]
+  \item un \textbf{modele de conception} riche, organise autour de \texttt{reservation} (avec \texttt{animal}, \texttt{paiement}, \texttt{service\_reservation}, \texttt{annulation}, etc.) ;
+  \item un \textbf{modele operationnel} plus simple, organise autour de \texttt{offre\_garde}, effectivement manipule par le code applicatif (routes \texttt{src/app/api/**} et services \texttt{src/lib/**}).
+\end{enumerate}
+Cette dualite reflete l'evolution du projet : la conception initiale a ete
+affinee en un sous-ensemble pragmatique pour la mise en oeuvre.
+
+\subsection{Entites par domaine}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Domaine} & \textbf{Tables et role} \\
+\midrule
+Comptes et identite & \texttt{utilisateur} (compte central : identite, adresse geocodee, documents, role, statut), \texttt{prestataire} et \texttt{prestataire\_profil} (profils de garde), \texttt{user\_public\_key} (cle publique de chiffrement). \\
+Animaux et veterinaires & \texttt{animal} (rattache a un proprietaire et a un veterinaire habituel), \texttt{veterinaire} et \texttt{veterinaire\_clinique} (annuaires), \texttt{info\_veterinaire} (veterinaire de reference d'un proprietaire). \\
+Reservations et services & \texttt{reservation} et \texttt{reservation\_animal} (conception), \texttt{offre\_garde} (operationnel), \texttt{disponibilite}, \texttt{service\_type} et \texttt{service\_reservation}. \\
+Paiements et annulations & \texttt{paiement} (rattache a Stripe), \texttt{annulation} et \texttt{annulation\_regle} (politique de remboursement). \\
+Avis et moderation & \texttt{avis} et \texttt{avis\_offre} (notation apres garde, de 1 a 5), \texttt{signalement} (moderation par un administrateur). \\
+Communication & \texttt{conversation} et \texttt{message} (conception), \texttt{chat\_conversation} et \texttt{chat\_message} (messagerie chiffree : \texttt{ciphertext} et \texttt{iv}), \texttt{notification}. \\
+Contenu et journal & \texttt{e\_journal} (articles des prestataires), \texttt{journal}, \texttt{journal\_entry}, \texttt{journal\_photo} et \texttt{journal\_entries} (journal de garde). \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Relations (cles etrangeres)}
+Le tableau suivant recense l'integralite des cles etrangeres declarees, par
+famille de modele.
+
+\begin{longtable}{@{}lll@{}}
+\toprule
+\textbf{Table source} & \textbf{Cle etrangere} & \textbf{Table cible} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Table source} & \textbf{Cle etrangere} & \textbf{Table cible} \\
+\midrule
+\endhead
+\multicolumn{3}{@{}l}{\textit{Modele de conception}}\\
+\texttt{animal} & \texttt{id\_user} & \texttt{utilisateur} \\
+\texttt{animal} & \texttt{id\_veterinaire\_habituel} & \texttt{veterinaire} \\
+\texttt{prestataire} & \texttt{id\_user} & \texttt{utilisateur} \\
+\texttt{disponibilite} & \texttt{id\_prestataire} & \texttt{prestataire} \\
+\texttt{reservation} & \texttt{id\_proprietaire} & \texttt{utilisateur} \\
+\texttt{reservation} & \texttt{id\_prestataire} & \texttt{prestataire} \\
+\texttt{reservation} & \texttt{id\_veterinaire\_urgence} & \texttt{veterinaire} \\
+\texttt{reservation\_animal} & \texttt{id\_reservation} & \texttt{reservation} \\
+\texttt{reservation\_animal} & \texttt{id\_animal} & \texttt{animal} \\
+\texttt{service\_reservation} & \texttt{id\_reservation} & \texttt{reservation} \\
+\texttt{service\_reservation} & \texttt{id\_service\_type} & \texttt{service\_type} \\
+\texttt{paiement} & \texttt{id\_reservation} & \texttt{reservation} \\
+\texttt{avis} & \texttt{id\_reservation} & \texttt{reservation} \\
+\texttt{avis} & \texttt{id\_auteur} & \texttt{utilisateur} \\
+\texttt{avis} & \texttt{id\_destinataire} & \texttt{utilisateur} \\
+\texttt{e\_journal} & \texttt{id\_prestataire} & \texttt{prestataire} \\
+\texttt{e\_journal} & \texttt{id\_reservation} & \texttt{reservation} \\
+\texttt{conversation} & \texttt{id\_user\_1} & \texttt{utilisateur} \\
+\texttt{conversation} & \texttt{id\_user\_2} & \texttt{utilisateur} \\
+\texttt{conversation} & \texttt{id\_reservation} & \texttt{reservation} \\
+\texttt{message} & \texttt{id\_conversation} & \texttt{conversation} \\
+\texttt{message} & \texttt{id\_expediteur} & \texttt{utilisateur} \\
+\texttt{notification} & \texttt{id\_user} & \texttt{utilisateur} \\
+\texttt{annulation} & \texttt{id\_reservation} & \texttt{reservation} \\
+\texttt{annulation} & \texttt{id\_demandeur} & \texttt{utilisateur} \\
+\texttt{annulation} & \texttt{id\_regle\_appliquee} & \texttt{annulation\_regle} \\
+\texttt{signalement} & \texttt{id\_reporter} & \texttt{utilisateur} \\
+\texttt{signalement} & \texttt{id\_moderateur} & \texttt{utilisateur} \\
+\addlinespace
+\multicolumn{3}{@{}l}{\textit{Modele operationnel}}\\
+\texttt{prestataire\_profil} & \texttt{utilisateur\_id} & \texttt{utilisateur} \\
+\texttt{offre\_garde} & \texttt{proprietaire\_id} & \texttt{utilisateur} \\
+\texttt{offre\_garde} & \texttt{prestataire\_id} & \texttt{utilisateur} \\
+\texttt{info\_veterinaire} & \texttt{proprietaire\_id} & \texttt{utilisateur} \\
+\texttt{avis\_offre} & \texttt{offre\_id} & \texttt{offre\_garde} \\
+\texttt{avis\_offre} & \texttt{proprietaire\_id} & \texttt{utilisateur} \\
+\texttt{avis\_offre} & \texttt{prestataire\_id} & \texttt{utilisateur} \\
+\texttt{journal} & \texttt{proprietaire\_id} & \texttt{utilisateur} \\
+\texttt{journal\_entry} & \texttt{journal\_id} & \texttt{journal} \\
+\texttt{journal\_entry} & \texttt{auteur\_id} & \texttt{utilisateur} \\
+\texttt{journal\_entry} & \texttt{offre\_id} & \texttt{offre\_garde} \\
+\texttt{journal\_photo} & \texttt{entry\_id} & \texttt{journal\_entry} \\
+\texttt{chat\_conversation} & \texttt{offre\_id} & \texttt{offre\_garde} \\
+\texttt{chat\_conversation} & \texttt{proprietaire\_id} & \texttt{utilisateur} \\
+\texttt{chat\_conversation} & \texttt{prestataire\_id} & \texttt{utilisateur} \\
+\texttt{chat\_message} & \texttt{conversation\_id} & \texttt{chat\_conversation} \\
+\texttt{chat\_message} & \texttt{sender\_id} & \texttt{utilisateur} \\
+\texttt{user\_public\_key} & \texttt{utilisateur\_id} & \texttt{utilisateur} \\
+\bottomrule
+\end{longtable}
+
+\subsection{Diagramme entite-association : modele operationnel}
+Diagramme genere a partir du schema SQL. Les fleches pleines (noires, epaisses)
+marquent l'ossature principale, les fleches grises les references secondaires.
+Pour la lisibilite, les references secondaires vers \texttt{utilisateur} (par
+exemple \texttt{avis\_offre.proprietaire\_id}) figurent dans le tableau des
+cles etrangeres mais pas sur le diagramme. \texttt{journal\_entries} et
+\texttt{veterinaire\_clinique} sont autonomes (aucune cle etrangere declaree).
+
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}
+  \node[hubentity] (uti) at (0,0) {utilisateur};
+  \node[entity] (pp)  at (0,3.2)  {prestataire\_profil};
+  \node[entity] (upk) at (0,-2.4) {user\_public\_key};
+  \node[entity] (iv)  at (0,-4.2) {info\_veterinaire};
+  \node[hubentity] (og) at (5.6,0) {offre\_garde};
+  \node[entity] (jo)  at (5.6,3.2)  {journal};
+  \node[entity] (ao)  at (11.2,2.6)  {avis\_offre};
+  \node[entity] (cc)  at (11.2,0)    {chat\_conversation};
+  \node[entity] (je)  at (11.2,-2.6) {journal\_entry};
+  \node[entity] (cm)  at (16.6,0)    {chat\_message};
+  \node[entity] (jp)  at (16.6,-2.6) {journal\_photo};
+  \node[entity] (jes) at (5.6,-4.2)  {journal\_entries};
+  \node[entity] (vc)  at (11.2,-4.6) {veterinaire\_clinique};
+
+  \draw[fk] (pp)  -- (uti);
+  \draw[fk] (upk) -- (uti);
+  \draw[fk] (iv)  -- (uti);
+  \draw[fk] (jo)  -- (uti);
+  \draw[spine] (og) -- node[above,font=\scriptsize,text=inkgray]{prop. / prest.} (uti);
+  \draw[spine] (ao) -- (og);
+  \draw[spine] (cc) -- (og);
+  \draw[spine] (je) -- (jo);
+  \draw[fk,dashed] (je) -- (og);
+  \draw[spine] (cm) -- (cc);
+  \draw[spine] (jp) -- (je);
+\end{tikzpicture}}
+\end{center}
+
+\subsection{Diagramme entite-association : modele de conception}
+Memes conventions. Les fleches en pointilles indiquent une reference secondaire.
+Les references multiples vers \texttt{utilisateur} (par exemple
+\texttt{avis.id\_auteur} et \texttt{avis.id\_destinataire}) sont detaillees dans
+le tableau des cles etrangeres.
+
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}
+  \node[entity] (vet) at (0,3.5)  {veterinaire};
+  \node[hubentity] (uti) at (0,0) {utilisateur};
+  \node[entity] (st)  at (0,-3.5) {service\_type};
+  \node[entity] (ar)  at (0,-6)   {annulation\_regle};
+  \node[entity] (ani) at (4.8,4)  {animal};
+  \node[entity] (pre) at (4.8,1.5){prestataire};
+  \node[entity] (conv)at (4.8,-1) {conversation};
+  \node[entity] (noti)at (4.8,-3) {notification};
+  \node[entity] (sig) at (4.8,-5) {signalement};
+  \node[entity] (disp)at (9.6,3.7){disponibilite};
+  \node[hubentity] (res) at (9.6,1) {reservation};
+  \node[entity] (msg) at (9.6,-1.6){message};
+  \node[entity] (ej)  at (9.6,-3.6){e\_journal};
+  \node[entity] (ra)  at (14.6,4)   {reservation\_animal};
+  \node[entity] (sr)  at (14.6,2.3) {service\_reservation};
+  \node[entity] (pai) at (14.6,0.8) {paiement};
+  \node[entity] (avi) at (14.6,-0.8){avis};
+  \node[entity] (annu)at (14.6,-2.6){annulation};
+
+  \draw[fk] (ani) -- (uti);
+  \draw[fk,dashed] (ani) -- (vet);
+  \draw[fk] (pre) -- (uti);
+  \draw[fk] (disp) -- (pre);
+  \draw[spine] (res) -- (uti);
+  \draw[fk] (res) -- (pre);
+  \draw[fk,dashed] (res) -- (vet);
+  \draw[fk] (ra) -- (res);
+  \draw[fk,dashed] (ra) -- (ani);
+  \draw[fk] (sr) -- (res);
+  \draw[fk,dashed] (sr) -- (st);
+  \draw[fk] (pai) -- (res);
+  \draw[fk] (avi) -- (res);
+  \draw[fk] (annu) -- (res);
+  \draw[fk,dashed] (annu) -- (ar);
+  \draw[fk] (conv) -- (uti);
+  \draw[fk,dashed] (conv) -- (res);
+  \draw[fk] (msg) -- (conv);
+  \draw[fk] (noti) -- (uti);
+  \draw[fk] (sig) -- (uti);
+  \draw[fk] (ej) -- (pre);
+  \draw[fk,dashed] (ej) -- (res);
+\end{tikzpicture}}
+\end{center}
+
+\subsection{Diagramme de sequence : reservation et paiement}
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize,>={Latex[length=2mm]}]
+  \foreach \x/\nom in {0/Proprietaire, 4.6/Application, 9.2/Supabase, 13.8/Stripe}{
+    \node[entity] at (\x,0) {\nom};
+    \draw[inkgray,dashed] (\x,-0.45) -- (\x,-8.6);
+  }
+  \draw[->] (0,-1)   -- (4.6,-1)  node[midway,above,font=\scriptsize]{1. Creer une offre};
+  \draw[->] (4.6,-2) -- (9.2,-2)  node[midway,above,font=\scriptsize]{2. INSERT offre\_garde};
+  \draw[->] (4.6,-3) -- (13.8,-3) node[midway,above,font=\scriptsize]{3. Creer session de paiement};
+  \draw[->,dashed] (13.8,-4) -- (4.6,-4) node[midway,above,font=\scriptsize]{4. URL de paiement};
+  \draw[->,dashed] (4.6,-5) -- (0,-5)    node[midway,above,font=\scriptsize]{5. Redirection};
+  \draw[->] (13.8,-6) -- (4.6,-6) node[midway,above,font=\scriptsize]{6. Webhook : paiement confirme};
+  \draw[->] (4.6,-7) -- (9.2,-7)  node[midway,above,font=\scriptsize]{7. UPDATE statut paye};
+  \draw[->,dashed] (4.6,-8) -- (0,-8) node[midway,above,font=\scriptsize]{8. Confirmation};
+\end{tikzpicture}}
+\end{center}
+
+\subsection{Diagramme de sequence : assistant IA}
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize,>={Latex[length=2mm]}]
+  \foreach \x/\nom in {0/Utilisateur, 3.7/Widget, 7.4/{Route /api/assistant}, 11.1/{AI Search}, 14.8/{Azure OpenAI}}{
+    \node[entity] at (\x,0) {\nom};
+    \draw[inkgray,dashed] (\x,-0.45) -- (\x,-8.6);
+  }
+  \draw[->] (0,-1)    -- (3.7,-1)  node[midway,above,font=\scriptsize]{1. Question};
+  \draw[->] (3.7,-2)  -- (7.4,-2)  node[midway,above,font=\scriptsize]{2. POST historique};
+  \draw[->] (7.4,-3)  -- (11.1,-3) node[midway,above,font=\scriptsize]{3. retrieve(question)};
+  \draw[->,dashed] (11.1,-4) -- (7.4,-4) node[midway,above,font=\scriptsize]{4. chunks + sources};
+  \draw[->] (7.4,-5)  -- (14.8,-5) node[midway,above,font=\scriptsize]{5. chat (contexte + outils)};
+  \draw[->,dashed] (14.8,-6) -- (7.4,-6) node[midway,above,font=\scriptsize]{6. tokens / appel d'outil};
+  \draw[->,dashed] (7.4,-7)  -- (3.7,-7) node[midway,above,font=\scriptsize]{7. flux SSE};
+  \draw[->,dashed] (3.7,-8)  -- (0,-8)   node[midway,above,font=\scriptsize]{8. Reponse affichee};
+\end{tikzpicture}}
+\end{center}
+
+% ============================================================
+\section{Architecture technique}
+% ============================================================
+
+\subsection{Vue d'ensemble en couches}
+L'application est un projet Next.js unique (frontend et routes serveur dans le
+meme deploiement) qui orchestre des services geres. Le navigateur dialogue avec
+les routes serveur, lesquelles appellent l'authentification, la base de donnees,
+les services d'intelligence artificielle, le paiement et l'envoi d'e-mails.
+
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  node distance=0.6cm and 0.5cm,
+  box/.style={draw=ink,rounded corners=2pt,align=center,inner sep=5pt,minimum height=0.95cm,fill=white},
+  ext/.style={box,text width=2.4cm},
+  arr/.style={-{Latex[length=2mm]},ink,thick}
+]
+\node[box,fill=ink,text=white,text width=11cm] (client) {Navigateur : interface React (composants client, flux SSE)};
+\node[box,below=of client,text width=11cm] (app) {Application Next.js sur Azure Container Apps\\ (rendu serveur, route handlers, couche services \texttt{src/lib})};
+
+\node[ext,below=1.2cm of app,xshift=-4.5cm] (clerk) {Clerk\\ authentification};
+\node[ext,right=of clerk] (supa) {Supabase\\ PostgreSQL + Storage};
+\node[ext,right=of supa] (aoai) {Azure OpenAI\\ chat + embeddings};
+\node[ext,right=of aoai] (search) {Azure AI Search\\ RAG};
+
+\node[ext,below=0.5cm of clerk] (di) {Azure Document Intelligence};
+\node[ext,right=of di] (stripe) {Stripe\\ paiements};
+\node[ext,right=of stripe] (resend) {Resend\\ e-mails};
+\node[ext,right=of resend] (geo) {Nominatim\\ geocodage};
+
+\draw[arr] (client) -- (app);
+\draw[arr] (app) -- (clerk);
+\draw[arr] (app) -- (supa);
+\draw[arr] (app) -- (aoai);
+\draw[arr] (app) -- (search);
+\draw[arr] (app.south) -- (di.north);
+\draw[arr] (app) -- (stripe);
+\draw[arr] (app) -- (resend);
+\draw[arr] (app) -- (geo);
+\end{tikzpicture}}
+\end{center}
+
+\subsection{Pile technologique}
+\begin{tabularx}{\linewidth}{@{}llX@{}}
+\toprule
+\textbf{Couche} & \textbf{Technologie} & \textbf{Role} \\
+\midrule
+Langage & TypeScript (mode strict) & Typage statique du frontend et du backend. \\
+Framework & Next.js 16, React 19 & App Router, composants serveur et client, routes API. \\
+Style & Tailwind CSS 4, next-themes & Design utilitaire, mode sombre. \\
+Cartographie & Leaflet, react-leaflet & Carte interactive des prestataires. \\
+Authentification & Clerk & Inscription, connexion, sessions. \\
+Donnees & Supabase (PostgreSQL) & Base relationnelle, stockage de fichiers, RLS. \\
+Paiement & Stripe & Sessions de paiement et webhooks. \\
+E-mails & Resend & Notifications transactionnelles. \\
+IA (LLM) & Azure OpenAI & Assistant et extraction d'adresse. \\
+IA (recherche) & Azure AI Search & Index vectoriel du RAG. \\
+IA (OCR) & Azure Document Intelligence & Lecture des documents du profil. \\
+Hebergement & Azure Container Apps, ACR & Conteneur Next.js, mise a l'echelle a zero. \\
+Tests & Vitest & Tests unitaires et d'integration. \\
+Outillage & Bun & Gestionnaire de paquets et execution. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Frontend}
+Le frontend repose sur l'App Router de Next.js. Par defaut les composants sont
+rendus cote serveur ; ceux qui requierent de l'etat ou des evenements portent la
+directive \texttt{"use client"}. Le style est assure par Tailwind, avec un theme
+clair / sombre gere par \texttt{next-themes}. La carte de recherche utilise
+Leaflet. L'authentification cote interface est fournie par les composants Clerk,
+et un widget flottant expose l'assistant IA sur toutes les pages aux utilisateurs
+connectes.
+
+\subsection{Backend}
+Le backend suit un decoupage en couches inspire de l'architecture propre :
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{Route handlers} (\texttt{src/app/api/**/route.ts}) : validation de l'entree, authentification, mise en forme de la reponse.
+  \item \textbf{Couche services} (\texttt{src/lib/**}) : logique metier et acces aux services externes (Supabase, Azure, Stripe).
+  \item \textbf{Donnees} : PostgreSQL via Supabase, avec securite au niveau des lignes et stockage des fichiers.
+\end{enumerate}
+Les routes principales couvrent les comptes (\texttt{/api/profile}), les
+reservations (\texttt{/api/bookings}), les offres (\texttt{/api/offers}), la
+messagerie (\texttt{/api/conversations}), le journal (\texttt{/api/journal}), les
+avis (\texttt{/api/reviews}), les paiements (\texttt{/api/payments}), la
+recherche (\texttt{/api/search}), les veterinaires (\texttt{/api/veterinaires}),
+l'administration (\texttt{/api/admin}), l'assistant (\texttt{/api/assistant}) et
+l'OCR du profil (\texttt{/api/profile/ocr}).
+
+\subsection{Ressources Azure}
+Trois briques Azure portent l'intelligence et l'hebergement. Pour chacune : le
+role, la justification du choix et l'integration concrete.
+
+\subsubsection{Azure OpenAI}
+\textbf{Ce que c'est.} Service gere donnant acces aux modeles OpenAI dans le
+perimetre Azure. PAWLY deploie un modele de chat (\texttt{gpt-4o} ou
+\texttt{gpt-4o-mini}) et un modele d'embeddings (\texttt{text-embedding-3-small},
+1536 dimensions).
+
+\textbf{Pourquoi.} La residence des donnees en region europeenne et la
+facturation au jeton conviennent a un usage maitrise ; le modele d'embeddings
+alimente la recherche vectorielle, et le modele de chat sert a la fois
+l'assistant et l'extraction structuree d'adresse.
+
+\textbf{Comment.} La fabrique \texttt{src/lib/ai/azure-openai.ts} lit l'endpoint
+et la cle depuis l'environnement et construit le client.
+
+\begin{Verbatim}
+az cognitiveservices account create -n pawly-openai -g pawly-rg \
+  -l francecentral --kind OpenAI --sku S0 --custom-domain pawly-openai
+
+az cognitiveservices account deployment create -n pawly-openai -g pawly-rg \
+  --deployment-name gpt-4o-mini --model-name gpt-4o-mini \
+  --model-version "2024-07-18" --model-format OpenAI \
+  --sku-capacity 20 --sku-name Standard
+\end{Verbatim}
+
+\subsubsection{Azure AI Search}
+\textbf{Ce que c'est.} Moteur de recherche gere servant d'index vectoriel et
+textuel pour le RAG. L'index \texttt{pawly-kb} combine un profil vectoriel HNSW
+et une configuration semantique.
+
+\textbf{Pourquoi.} Il permet une recherche hybride (vectorielle plus lexicale)
+performante, indispensable pour ancrer les reponses de l'assistant dans une base
+de connaissances a jour plutot que dans la seule memoire du modele.
+
+\textbf{Comment.} Le script \texttt{scripts/ingest-kb.ts} cree l'index, decoupe
+les fichiers \texttt{data/knowledge-base/*.md}, calcule les embeddings et envoie
+les documents. A l'execution, \texttt{src/lib/ai/search.ts} interroge l'index via
+la fonction \texttt{retrieve(question, k)}.
+
+\begin{Verbatim}
+az search service create -n pawly-search -g pawly-rg \
+  -l francecentral --sku basic
+\end{Verbatim}
+
+\subsubsection{Azure Document Intelligence}
+\textbf{Ce que c'est.} Service d'analyse documentaire. PAWLY emploie deux modeles
+predefinis : \texttt{prebuilt-idDocument} (extraction structuree des champs d'une
+piece d'identite, avec score de confiance) et \texttt{prebuilt-read} (OCR de
+texte brut).
+
+\textbf{Pourquoi.} L'extraction structuree est nettement plus fiable que des
+expressions regulieres appliquees a un texte brut. Pour l'attestation
+d'assurance, au format libre, l'OCR est complete par une extraction d'adresse
+realisee par le modele de chat.
+
+\textbf{Comment.} La route \texttt{src/app/api/profile/ocr/route.ts} recoit le
+fichier, appelle le modele adapte via
+\texttt{src/lib/ai/azure-document-intelligence.ts}, puis ne renvoie que les
+champs du formulaire. Le document n'est ni stocke ni journalise.
+
+\begin{Verbatim}
+az cognitiveservices account create -n pawly-docintel -g pawly-rg \
+  --kind FormRecognizer --sku S0 --location francecentral --yes
+\end{Verbatim}
+
+\subsubsection{Azure Container Apps et ACR}
+\textbf{Ce que c'est.} Hebergement conteneurise. L'image Next.js est construite
+puis publiee dans Azure Container Registry, et executee par Container Apps.
+
+\textbf{Pourquoi.} La mise a l'echelle a zero reduit les couts a l'inactivite ;
+la mise a l'echelle horizontale absorbe la charge ; les secrets sont geres par
+la plateforme.
+
+\textbf{Comment.} L'image est construite dans le cloud (\texttt{az acr build}),
+puis l'application est creee avec ses secrets et variables d'environnement.
+
+\begin{Verbatim}
+az acr build -r pawlyacr -t pawly-web:latest .
+
+az containerapp create -n pawly-web -g pawly-rg --environment pawly-env \
+  --image <acr>/pawly-web:latest --target-port 3000 --ingress external \
+  --min-replicas 0 --max-replicas 3
+\end{Verbatim}
+
+\subsection{Integrations tierces}
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Stripe} : creation d'une session de paiement (\texttt{/api/payments/checkout}), confirmation, et reception fiable des evenements par webhook signe (\texttt{/api/payments/webhook}).
+  \item \textbf{Resend} : envoi des e-mails transactionnels (confirmations, notifications).
+  \item \textbf{Nominatim} : geocodage gratuit de l'adresse (ville et code postal vers latitude et longitude) lors de l'edition du profil.
+  \item \textbf{Clerk} : fournisseur d'identite, sessions et composants d'interface.
+\end{itemize}
+
+\subsection{Securite et confidentialite}
+\begin{itemize}[leftmargin=1.4em]
+  \item Les secrets serveur ne sont jamais exposes au client ni au depot : variables d'environnement en local, secrets Container Apps en production, evolution possible vers Key Vault.
+  \item L'autorisation est verifiee cote serveur a chaque ressource protegee ; le client n'est pas une frontiere de securite.
+  \item L'OCR s'execute cote serveur : la cle Azure reste secrete, l'image est traitee en memoire puis abandonnee, et aucune donnee personnelle n'est journalisee.
+  \item PostgreSQL applique la securite au niveau des lignes ; les requetes sont parametrees.
+  \item Les entrees externes sont validees au bord (route handlers).
+\end{itemize}
+
+\subsection{Deploiement}
+Le deploiement est entierement scriptable par l'interface en ligne de commande
+Azure : construction de l'image, creation de l'environnement, publication de
+l'application avec ses secrets, puis raccordement des services externes (Clerk,
+Supabase, Stripe) a l'URL publique. La mise a jour apres un changement de code se
+resume a reconstruire l'image et a mettre a jour l'application.
+
+% ============================================================
+\section{Fonctionnalites d'intelligence artificielle}
+% ============================================================
+
+\subsection{Architecture technique du RAG}
+L'assistant repose sur un schema de generation augmentee par la recherche
+(Retrieval Augmented Generation). Il combine deux pipelines : une \textbf{ingestion}
+hors ligne qui construit l'index de connaissances, et une \textbf{requete} en
+ligne qui ancre chaque reponse dans cet index.
+
+\subsubsection{Pipeline d'ingestion (hors ligne)}
+Execute par \texttt{scripts/ingest-kb.ts} (commande \texttt{bun run ingest:kb}) :
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{Lecture} des fichiers \texttt{data/knowledge-base/*.md} et analyse du frontmatter (\texttt{parseFrontmatter} : titre, categorie, source, langue).
+  \item \textbf{Decoupage} en fragments par \texttt{chunkText} : environ 1500 caracteres par fragment, avec un recouvrement de 200 caracteres, sur des frontieres de paragraphe et de maniere deterministe (identifiants stables).
+  \item \textbf{Vectorisation} de chaque fragment par \texttt{text-embedding-3-small} (1536 dimensions).
+  \item \textbf{Indexation} : \texttt{mergeOrUploadDocuments} envoie le contenu et son vecteur dans l'index Azure AI Search \texttt{pawly-kb}, configure avec un algorithme vectoriel HNSW (\texttt{hnsw-profile}) et une configuration semantique.
+\end{enumerate}
+
+\subsubsection{Pipeline de requete (en ligne)}
+Execute par la route \texttt{/api/assistant} et le service \texttt{src/lib/ai/search.ts} :
+\begin{enumerate}[leftmargin=1.6em]
+  \item Authentification (Clerk) et resolution du compte (Supabase).
+  \item \texttt{retrieve(question, 5)} vectorise la question puis lance une \textbf{recherche hybride} (mots-cles plus vecteur, k plus proches voisins) et renvoie les cinq meilleurs fragments avec leur score. En cas d'echec, le service renvoie une liste vide afin que l'assistant degrade honnetement sa reponse plutot que d'echouer.
+  \item \texttt{buildSystemPrompt} et \texttt{buildContextBlock} (\texttt{src/lib/ai/rag.ts}) composent le message systeme personnalise et le bloc de contexte numerote (les numeros correspondent aux sources citees).
+  \item \texttt{gpt-4o} genere la reponse et peut appeler des outils sur les donnees reelles : \texttt{find\_nearby\_vets}, \texttt{get\_my\_bookings}, \texttt{get\_my\_journal}.
+  \item La reponse est diffusee en flux continu (Server-Sent Events), affichee jeton par jeton, suivie des sources.
+\end{enumerate}
+
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[node distance=6mm]
+  % Ingestion (haut)
+  \node[proc] (in1) at (0,2.4)    {\texttt{*.md}\\ base de connaissances};
+  \node[proc] (in2) at (3.3,2.4)  {parseFrontmatter\\ titre, source};
+  \node[proc] (in3) at (6.6,2.4)  {chunkText\\ 1500 car. / overlap 200};
+  \node[proc] (in4) at (9.9,2.4)  {embed\\ text-embedding-3-small\\ 1536 dimensions};
+  \node[proc] (in5) at (13.2,2.4) {mergeOrUpload};
+
+  % Index (centre)
+  \node[store] (idx) at (6.6,0) {Azure AI Search\\ index \texttt{pawly-kb}\\ HNSW + semantique};
+
+  % Requete (bas)
+  \node[proc] (q1) at (0,-2.4)    {Question};
+  \node[proc] (q2) at (3.3,-2.4)  {embed\\ (question)};
+  \node[proc] (q3) at (6.6,-2.4)  {Recherche hybride\\ mots-cles + vecteur\\ top k = 5};
+  \node[proc] (q4) at (9.9,-2.4)  {Contexte + sources\\ buildContextBlock};
+  \node[proc] (q5) at (13.2,-2.4) {gpt-4o\\ appel d'outils};
+  \node[proc] (q6) at (16.5,-2.4) {Flux SSE\\ jeton par jeton};
+  \node[store] (db) at (13.2,-4.8) {Supabase\\ outils metier};
+
+  \draw[flow] (in1) -- (in2);
+  \draw[flow] (in2) -- (in3);
+  \draw[flow] (in3) -- (in4);
+  \draw[flow] (in4) -- (in5);
+  \draw[flow] (in5) -- (idx);
+
+  \draw[flow] (q1) -- (q2);
+  \draw[flow] (q2) -- (q3);
+  \draw[{Latex[length=2mm]}-{Latex[length=2mm]},ink] (q3) -- node[right,font=\scriptsize,text=inkgray]{requete / chunks} (idx);
+  \draw[flow] (q3) -- (q4);
+  \draw[flow] (q4) -- (q5);
+  \draw[flow] (q5) -- (q6);
+  \draw[{Latex[length=2mm]}-{Latex[length=2mm]},ink] (q5) -- (db);
+\end{tikzpicture}}
+\end{center}
+
+\subsection{Architecture technique de l'OCR du profil}
+La saisie du profil est assistee par l'OCR via la route serveur
+\texttt{/api/profile/ocr} (authentifiee Clerk, garde-fous de type et de taille
+4 Mo maximum). Deux chaines distinctes sont selectionnees selon le type de
+document.
+
+\subsubsection{Carte d'identite : extraction du nom et du prenom}
+Le modele \texttt{prebuilt-idDocument} effectue une extraction \textbf{structuree}
+(et non un simple OCR) : il renvoie des champs nommes assortis d'un score de
+confiance. La fonction \texttt{mapIdDocumentFields} retient les champs dont la
+confiance est superieure ou egale a 0,5 et applique la correspondance
+\texttt{FirstName} vers \texttt{prenom}, \texttt{LastName} vers \texttt{nom}, et
+l'adresse structuree (\texttt{valueAddress}) vers \texttt{adresse},
+\texttt{code\_postal} et \texttt{ville}.
+
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}
+  \node[proc] (a1) at (0,0)    {Navigateur\\ carte d'identite};
+  \node[proc] (a2) at (3.4,0)  {\texttt{/api/profile/ocr}\\ auth, type, taille};
+  \node[proc] (a3) at (6.8,0)  {Azure DI\\ \texttt{prebuilt-idDocument}};
+  \node[proc] (a4) at (10.2,0) {Champs structures\\ FirstName, LastName,\\ Address (+ confiance)};
+  \node[proc] (a5) at (13.6,0) {mapIdDocumentFields\\ confiance min 0,5\\ FirstName -> prenom\\ LastName -> nom};
+  \node[store] (a6) at (17.0,0) {Formulaire\\ pre-rempli};
+  \draw[flow] (a1) -- (a2);
+  \draw[flow] (a2) -- (a3);
+  \draw[flow] (a3) -- (a4);
+  \draw[flow] (a4) -- (a5);
+  \draw[flow] (a5) -- (a6);
+\end{tikzpicture}}
+\end{center}
+
+\subsubsection{Attestation d'assurance : extraction de l'adresse}
+L'attestation est de format libre : aucun modele predefini ne renvoie d'adresse
+structuree. La chaine utilise donc \texttt{prebuilt-read} pour l'OCR du texte,
+puis \texttt{gpt-4o} (\texttt{src/lib/ai/address-extract.ts}, sortie JSON,
+temperature 0) pour extraire l'adresse de l'assure. La sortie est validee par
+\texttt{parseAddressJson} (le \texttt{code\_postal} doit comporter cinq chiffres).
+Une extraction par expressions regulieres (\texttt{parseAddress}) sert de repli
+si le service de chat est indisponible.
+
+\begin{center}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}
+  \node[proc] (b1) at (0,0)    {Navigateur\\ attestation};
+  \node[proc] (b2) at (3.4,0)  {\texttt{/api/profile/ocr}};
+  \node[proc] (b3) at (6.8,0)  {Azure DI\\ \texttt{prebuilt-read}\\ OCR texte brut};
+  \node[proc] (b4) at (10.2,0) {gpt-4o\\ adresse JSON\\ \{adresse, code\_postal, ville\}};
+  \node[proc] (b5) at (13.8,0) {parseAddressJson\\ validation\\ + repli regex};
+  \node[store] (b6) at (17.2,0) {Formulaire\\ pre-rempli};
+  \draw[flow] (b1) -- (b2);
+  \draw[flow] (b2) -- (b3);
+  \draw[flow] (b3) -- (b4);
+  \draw[flow] (b4) -- (b5);
+  \draw[flow] (b5) -- (b6);
+\end{tikzpicture}}
+\end{center}
+
+Dans tous les cas, le document n'est ni stocke ni journalise, et l'utilisateur
+verifie les champs pre-remplis avant l'enregistrement.
+
+% ============================================================
+\section{Tests et qualite}
+% ============================================================
+La qualite est verifiee par trois controles complementaires :
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Typage} : \texttt{tsc --noEmit} garantit l'absence d'erreur de type.
+  \item \textbf{Style} : \texttt{eslint} applique les conventions du projet.
+  \item \textbf{Tests} : \texttt{vitest} couvre la logique metier pure. Par exemple, \texttt{src/lib/ocr-parse.test.ts} valide l'extraction des champs a partir d'un texte OCR reel et de la sortie JSON du modele.
+\end{itemize}
+La logique pure (analyse, validation) est isolee des appels reseau afin d'etre
+testable sans dependance externe.
+
+% ============================================================
+\section{Conclusion et perspectives}
+% ============================================================
+PAWLY propose une architecture moderne, coherente et testable : un socle Next.js
+unique, une base PostgreSQL geree, et une integration soignee de services
+d'intelligence artificielle au service de la confiance et de la simplicite.
+Plusieurs evolutions sont envisageables : adoption de Key Vault et d'une identite
+geree pour les secrets, observabilite renforcee (journaux et traces),
+enrichissement continu de la base de connaissances de l'assistant, et
+entrainement d'un modele documentaire personnalise pour les attestations
+d'assurance.
+
+% ============================================================
+\appendix
+\section{Annexes}
+% ============================================================
+
+\subsection{Variables d'environnement}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Variable} & \textbf{Usage} \\
+\midrule
+\texttt{NEXT\_PUBLIC\_APP\_URL} & URL publique de l'application. \\
+\texttt{CLERK\_SECRET\_KEY} & Cle serveur Clerk. \\
+\texttt{SUPABASE\_URL}, \texttt{SUPABASE\_SERVICE\_ROLE\_KEY} & Acces serveur a Supabase. \\
+\texttt{STRIPE\_SECRET\_KEY}, \texttt{STRIPE\_WEBHOOK\_SECRET} & Paiement et verification des webhooks. \\
+\texttt{RESEND\_API\_KEY} & Envoi d'e-mails. \\
+\texttt{AZURE\_OPENAI\_ENDPOINT}, \texttt{AZURE\_OPENAI\_API\_KEY} & Acces a Azure OpenAI. \\
+\texttt{AZURE\_OPENAI\_CHAT\_DEPLOYMENT} & Nom du deploiement de chat (par exemple \texttt{gpt-4o}). \\
+\texttt{AZURE\_OPENAI\_EMBEDDING\_DEPLOYMENT} & Nom du deploiement d'embeddings. \\
+\texttt{AZURE\_SEARCH\_ENDPOINT}, \texttt{AZURE\_SEARCH\_API\_KEY} & Acces a Azure AI Search. \\
+\texttt{AZURE\_SEARCH\_INDEX\_NAME} & Nom de l'index (\texttt{pawly-kb}). \\
+\texttt{AZURE\_DOCINTEL\_ENDPOINT}, \texttt{AZURE\_DOCINTEL\_KEY} & Acces a Azure Document Intelligence. \\
+\bottomrule
+\end{tabularx}
+
+\end{document}
