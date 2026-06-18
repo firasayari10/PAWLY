@@ -12,9 +12,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
-  // Emit a self-contained server bundle so the Docker image (Azure Container
-  // Apps) ships only the runtime it needs. See Dockerfile / docs/azure-setup.md.
-  output: "standalone",
+  // Emit a self-contained server bundle ONLY for the Docker image (Azure
+  // Container Apps), which sets DOCKER_BUILD=1. On Vercel the variable is
+  // absent, so Next uses its default output. See Dockerfile / docs/azure-setup.md.
+  output: process.env.DOCKER_BUILD ? "standalone" : undefined,
 };
 
 export default nextConfig;
